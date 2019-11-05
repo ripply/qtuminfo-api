@@ -3,16 +3,23 @@ const {Service} = require('egg')
 class InfoService extends Service {
   async getInfo() {
     let height = this.app.blockchainInfo.tip.height
+    let difficulty = JSON.parse(await this.app.redis.hget(this.app.name, 'difficulty')) || 0
     let stakeWeight = JSON.parse(await this.app.redis.hget(this.app.name, 'stakeweight')) || 0
+    let fullnodes = JSON.parse(await this.app.redis.hget(this.app.name, 'fullnodes')) || 0
     let feeRate = JSON.parse(await this.app.redis.hget(this.app.name, 'feerate')).find(item => item.blocks === 10).feeRate || 0.004
     let dgpInfo = JSON.parse(await this.app.redis.hget(this.app.name, 'dgpinfo')) || {}
+    let addresses = JSON.parse(await this.app.redis.hget(this.app.name, 'addresses')) || 0
     return {
       height,
       supply: this.getTotalSupply(),
       ...this.app.chain.name === 'mainnet' ? {circulatingSupply: this.getCirculatingSupply()} : {},
-      netStakeWeight: Math.round(stakeWeight),
+      difficulty,
+      stakeWeight: Math.round(stakeWeight),
+      fullnodes,
       feeRate,
-      dgpInfo
+      dgpInfo,
+      addresses,
+      netStakeWeight: Math.round(stakeWeight)
     }
   }
 
@@ -49,9 +56,19 @@ class InfoService extends Service {
     }
   }
 
+  async getDifficulty() {
+    const {Header} = this.ctx.model
+    let header = await Header.findOne({
+      attributes: ['bits'],
+      order: [['height', 'DESC']],
+      transaction: this.ctx.state.transaction
+    })
+    return header.difficulty
+  }
+
   async getStakeWeight() {
     const {Header} = this.ctx.model
-    const {gte: $gte} = this.app.Sequelize.Op
+    const {lt: $gte} = this.app.Sequelize.Op
     let height = await Header.aggregate('height', 'max', {transaction: this.ctx.state.transaction})
     let list = await Header.findAll({
       where: {height: {[$gte]: height - 500}},
@@ -87,6 +104,15 @@ class InfoService extends Service {
       minGasPrice: info.mingasprice,
       blockGasLimit: info.blockgaslimit
     }
+  }
+
+  async getAddresses() {
+    const {Address} = this.ctx.model
+    const {lt: $lt} = this.app.Sequelize.Op
+    return await Address.count({
+      where: {type: {[$lt]: 0x80}},
+      transaction: this.ctx.state.transaction
+    })
   }
 }
 

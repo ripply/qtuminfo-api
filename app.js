@@ -36,6 +36,13 @@ module.exports = app => {
     await app.redis.hset(app.name, 'address-growth', JSON.stringify(addressGrowth))
   })
 
+  app.messenger.on('update-difficulty', async () => {
+    let ctx = app.createAnonymousContext()
+    let difficulty = await ctx.service.info.getDifficulty()
+    await app.redis.hset(app.name, 'difficulty', JSON.stringify(difficulty))
+    namespace.to('blockchain').emit('difficulty', difficulty)
+  })
+
   app.messenger.on('update-stakeweight', async () => {
     let ctx = app.createAnonymousContext()
     let stakeWeight = await ctx.service.info.getStakeWeight()
@@ -47,11 +54,22 @@ module.exports = app => {
     await app.runSchedule('update-feerate')
   })
 
+  app.messenger.on('update-fullnodes', async () => {
+    await app.runSchedule('update-fullnodes')
+  })
+
   app.messenger.on('update-dgpinfo', async () => {
     let ctx = app.createAnonymousContext()
     let dgpInfo = await ctx.service.info.getDGPInfo()
     await app.redis.hset(app.name, 'dgpinfo', JSON.stringify(dgpInfo))
     namespace.to('blockchain').emit('dgpinfo', dgpInfo)
+  })
+
+  app.messenger.on('update-addresses', async () => {
+    let ctx = app.createAnonymousContext()
+    let addresses = await ctx.service.info.getAddresses()
+    await app.redis.hset(app.name, 'addresses', JSON.stringify(addresses))
+    namespace.to('blockchain').emit('addresses', addresses)
   })
 
   app.messenger.on('blockchain-info', info => {

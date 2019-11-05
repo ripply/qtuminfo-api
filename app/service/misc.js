@@ -120,6 +120,13 @@ class MiscService extends Service {
       CNY: CNYResult.data.data[coinId].quote.CNY.price
     }
   }
+
+  async getFullNodes() {
+    let {status, data} = await this.ctx.curl('https://qtum.org/api/nodes', {dataType: 'json'})
+    if (status === 200) {
+      return data.map(item => item.count).reduce((x, y) => x + y)
+    }
+  }
 }
 
 module.exports = MiscService

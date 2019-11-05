@@ -68,4 +68,5 @@ exports.qtuminfo = {
   }
 }
 
+exports.enableFullnodes = false
 exports.cmcAPIKey = null
