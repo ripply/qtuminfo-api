@@ -3,6 +3,7 @@ const {Service} = require('egg')
 class InfoService extends Service {
   async getInfo() {
     let height = this.app.blockchainInfo.tip.height
+    let blockTime = JSON.parse(await this.app.redis.hget(this.app.name, 'blocktime')) || 0
     let difficulty = JSON.parse(await this.app.redis.hget(this.app.name, 'difficulty')) || 0
     let stakeWeight = JSON.parse(await this.app.redis.hget(this.app.name, 'stakeweight')) || 0
     let fullnodes = JSON.parse(await this.app.redis.hget(this.app.name, 'fullnodes')) || 0
@@ -13,6 +14,7 @@ class InfoService extends Service {
       height,
       supply: this.getTotalSupply(),
       ...this.app.chain.name === 'mainnet' ? {circulatingSupply: this.getCirculatingSupply()} : {},
+      blockTime,
       difficulty,
       stakeWeight: Math.round(stakeWeight),
       fullnodes,
@@ -54,6 +56,16 @@ class InfoService extends Service {
     } else {
       return totalSupply
     }
+  }
+
+  async getBlockTime() {
+    const {Header} = this.ctx.model
+    let header = await Header.findOne({
+      attributes: ['timestamp'],
+      order: [['height', 'DESC']],
+      transaction: this.ctx.state.transaction
+    })
+    return header.timestamp
   }
 
   async getDifficulty() {

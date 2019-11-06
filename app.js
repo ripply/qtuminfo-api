@@ -36,6 +36,13 @@ module.exports = app => {
     await app.redis.hset(app.name, 'address-growth', JSON.stringify(addressGrowth))
   })
 
+  app.messenger.on('update-blocktime', async () => {
+    let ctx = app.createAnonymousContext()
+    let timestamp = await ctx.service.info.getBlockTime()
+    await app.redis.hset(app.name, 'blocktime', JSON.stringify(timestamp))
+    namespace.to('blockchain').emit('blocktime', timestamp)
+  })
+
   app.messenger.on('update-difficulty', async () => {
     let ctx = app.createAnonymousContext()
     let difficulty = await ctx.service.info.getDifficulty()
