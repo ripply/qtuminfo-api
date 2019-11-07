@@ -80,7 +80,7 @@ class InfoService extends Service {
 
   async getStakeWeight() {
     const {Header} = this.ctx.model
-    const {lt: $gte} = this.app.Sequelize.Op
+    const {gte: $gte} = this.app.Sequelize.Op
     let height = await Header.aggregate('height', 'max', {transaction: this.ctx.state.transaction})
     let list = await Header.findAll({
       where: {height: {[$gte]: height - 500}},
