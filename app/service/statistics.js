@@ -1,6 +1,35 @@
 const {Service} = require('egg')
 
 class StatisticsService extends Service {
+  async get24hStatistics() {
+    const db = this.ctx.model
+    const {sql} = this.ctx.helper
+    let timestamp = Math.floor(Date.now() / 1000)
+    let [{fromHeight, toHeight}] = await db.query(sql`
+      SELECT MIN(height) as fromHeight, MAX(height) as toHeight FROM header
+      WHERE timestamp BETWEEN ${timestamp - 86400 + 1} AND ${timestamp}
+    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    fromHeight = Math.max(fromHeight, 1)
+    let [[{transactionCount}], [{transactionVolume}], [{averageBlockTime}]] = await Promise.all([
+      db.query(sql`
+        SELECT SUM(transactions_count) AS transactionCount FROM block WHERE height BETWEEN ${fromHeight} AND ${toHeight}
+      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction}),
+      db.query(sql`
+        SELECT SUM(value) AS transactionVolume FROM transaction_output WHERE block_height BETWEEN ${fromHeight} AND ${toHeight}
+      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction}),
+      db.query(sql`
+        SELECT (
+          (SELECT timestamp FROM header WHERE height = ${toHeight}) - (SELECT timestamp FROM header WHERE height = ${fromHeight - 1})
+        ) / (${toHeight} - ${fromHeight} + 1) AS averageBlockTime
+      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    ])
+    return {
+      transactionCount: Number(transactionCount),
+      transactionVolume,
+      averageBlockTime: Number(averageBlockTime)
+    }
+  }
+
   async getDailyTransactions() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper

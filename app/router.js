@@ -202,6 +202,7 @@ module.exports = app => {
   )
   router.get('/misc/prices', controller.misc.prices)
 
+  router.get('/stats/24h', controller.statistics.info)
   router.get('/stats/daily-transactions', controller.statistics.dailyTransactions)
   router.get('/stats/block-interval', controller.statistics.blockInterval)
   router.get('/stats/address-growth', controller.statistics.addressGrowth)

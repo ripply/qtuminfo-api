@@ -19,6 +19,7 @@ module.exports = function(agent) {
       agent.messenger.sendRandom('update-dgpinfo')
       agent.messenger.sendRandom('update-addresses')
       agent.messenger.sendRandom('socket/block-tip', block)
+      agent.messenger.sendRandom('update-24h-statistics')
     })
     io.on('reorg', block => {
       tip = block
@@ -65,5 +66,6 @@ module.exports = function(agent) {
     agent.messenger.sendRandom('update-feerate')
     agent.messenger.sendRandom('update-dgpinfo')
     agent.messenger.sendRandom('update-addresses')
+    agent.messenger.sendRandom('update-24h-statistics')
   })
 }

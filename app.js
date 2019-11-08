@@ -8,6 +8,13 @@ module.exports = app => {
     app.messenger.sendToAgent('blockchain-info')
   })
 
+  app.messenger.on('update-24h-statistics', async () => {
+    let ctx = app.createAnonymousContext()
+    let _24hStatistics = await ctx.service.statistics.get24hStatistics()
+    await app.redis.hset(app.name, '24h-statistics', JSON.stringify(_24hStatistics))
+    namespace.to('blockchain').emit('24h-statistics', _24hStatistics)
+  })
+
   app.messenger.on('update-richlist', async () => {
     let ctx = app.createAnonymousContext()
     await ctx.service.balance.updateRichList()
