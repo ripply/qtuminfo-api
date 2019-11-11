@@ -207,6 +207,8 @@ module.exports = app => {
   router.get('/stats/block-interval', controller.statistics.blockInterval)
   router.get('/stats/address-growth', controller.statistics.addressGrowth)
 
+  router.get('/bulletin', controller.bulletin.list)
+
   io.route('subscribe', io.controller.default.subscribe)
   io.route('unsubscribe', io.controller.default.unsubscribe)
 }
