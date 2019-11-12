@@ -314,7 +314,7 @@ class ContractService extends Service {
       SELECT COUNT(DISTINCT(log._id)) AS count from evm_receipt receipt, evm_receipt_log log
       WHERE receipt._id = log.receipt_id AND ${blockFilter} AND ${{raw: contractFilter}}
         AND ${{raw: topic1Filter}} AND ${{raw: topic2Filter}} AND ${{raw: topic3Filter}} AND ${{raw: topic4Filter}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.transaction})
+    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
     if (totalCount === 0) {
       return {totalCount, logs: []}
     }
@@ -325,7 +325,7 @@ class ContractService extends Service {
         AND ${{raw: topic1Filter}} AND ${{raw: topic2Filter}} AND ${{raw: topic3Filter}} AND ${{raw: topic4Filter}}
       ORDER BY log._id ASC
       LIMIT ${offset}, ${limit}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.transaction})).map(log => log._id)
+    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(log => log._id)
 
     let logs = await EVMReceiptLog.findAll({
       where: {_id: {[$in]: ids}},

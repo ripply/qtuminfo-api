@@ -142,7 +142,7 @@ class BlockService extends Service {
         WHERE l.height = header.height AND l.height = block.height AND address._id = block.miner_id
         ORDER BY l.height ASC
       `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
-    } else { 
+    } else {
       blocks = await db.query(sql`
         SELECT
           header.hash AS hash, l.height AS height, header.timestamp AS timestamp,

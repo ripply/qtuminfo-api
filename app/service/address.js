@@ -129,7 +129,7 @@ class AddressService extends Service {
       },
       distinct: true,
       col: 'transactionId',
-      transaction: this.ctx.transaction
+      transaction: this.ctx.state.transaction
     })
   }
 
