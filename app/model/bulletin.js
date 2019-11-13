@@ -8,6 +8,7 @@ module.exports = app => {
       primaryKey: true,
       autoIncrement: true
     },
+    locale: STRING(10),
     title: STRING(255),
     url: STRING(255),
     priority: INTEGER.UNSIGNED
