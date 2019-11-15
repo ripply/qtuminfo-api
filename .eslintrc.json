@@ -16,6 +16,7 @@
     "getter-return": "warn",
     "no-console": "off",
     "no-constant-condition": ["warn", {"checkLoops": false}],
+    "no-control-regex": "off",
     "no-empty": ["warn", {"allowEmptyCatch": true}],
     "no-extra-parens": "warn",
     "require-atomic-updates": "off",
