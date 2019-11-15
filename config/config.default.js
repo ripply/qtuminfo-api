@@ -68,5 +68,16 @@ exports.qtuminfo = {
   }
 }
 
+exports.nodemailer = {
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: 'username',
+    pass: 'password'
+  }
+}
+
 exports.enableFullnodes = false
 exports.cmcAPIKey = null
+exports.feedbackReceivers = []

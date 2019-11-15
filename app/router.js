@@ -209,6 +209,10 @@ module.exports = app => {
 
   router.get('/bulletin', controller.bulletin.list)
 
+  router.post('/feedback', controller.feedback.create)
+
+  router.get('/captcha', controller.captcha.create)
+
   io.route('subscribe', io.controller.default.subscribe)
   io.route('unsubscribe', io.controller.default.unsubscribe)
 }
