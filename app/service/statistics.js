@@ -15,7 +15,7 @@ class StatisticsService extends Service {
         SELECT SUM(transactions_count) AS transactionCount FROM block WHERE height BETWEEN ${fromHeight} AND ${toHeight}
       `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction}),
       db.query(sql`
-        SELECT SUM(value) AS transactionVolume FROM transaction_output WHERE block_height BETWEEN ${fromHeight} AND ${toHeight}
+        SELECT SUM(transaction_volume) AS transactionVolume FROM block WHERE height BETWEEN ${fromHeight} AND ${toHeight}
       `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction}),
       db.query(sql`
         SELECT (
@@ -37,30 +37,33 @@ class StatisticsService extends Service {
       SELECT
         FLOOR(header.timestamp / 86400) AS date,
         SUM(block.transactions_count) AS transactionsCount,
-        SUM(block.contract_transactions_count) AS contractTransactionsCount
+        SUM(block.contract_transactions_count) AS contractTransactionsCount,
+        SUM(block.transaction_volume) AS transactionVolume
       FROM header, block
       WHERE header.height = block.height
       GROUP BY date
       ORDER BY date ASC
     `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
-    return result.map(({date, transactionsCount, contractTransactionsCount}) => ({
+    return result.map(({date, transactionsCount, contractTransactionsCount, transactionVolume}) => ({
       timestamp: date * 86400,
       transactionsCount,
-      contractTransactionsCount
+      contractTransactionsCount,
+      transactionVolume
     }))
   }
 
   async getBlockIntervalStatistics() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
+    let skips = this.app.chain.lastPoWBlockHeight === Infinity ? 1 : this.app.chain.lastPoWBlockHeight + 1
     let result = await db.query(sql`
       SELECT header.timestamp - prev_header.timestamp AS blockInterval, COUNT(*) AS count FROM header
       INNER JOIN header prev_header ON prev_header.height = header.height - 1
-      WHERE header.height > 5001
+      WHERE header.height > ${skips}
       GROUP BY blockInterval
       ORDER BY blockInterval ASC
     `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
-    let total = this.app.blockchainInfo.tip.height - 5001
+    let total = this.app.blockchainInfo.tip.height - skips
     return result.map(({blockInterval, count}) => ({interval: blockInterval, count, percentage: count / total}))
   }
 

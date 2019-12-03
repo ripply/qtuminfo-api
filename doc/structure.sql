@@ -28,6 +28,7 @@ CREATE TABLE `block` (
   `miner_id` bigint(20) unsigned NOT NULL,
   `transactions_count` int(10) unsigned NOT NULL,
   `contract_transactions_count` int(10) unsigned NOT NULL,
+  `transaction_volume` bigint(20) NOT NULL,
   PRIMARY KEY (`height`),
   UNIQUE KEY `hash` (`hash`),
   KEY `miner` (`miner_id`)

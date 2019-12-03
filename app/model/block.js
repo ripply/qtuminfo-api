@@ -14,7 +14,19 @@ module.exports = app => {
     weight: INTEGER.UNSIGNED,
     minerId: BIGINT.UNSIGNED,
     transactionsCount: INTEGER.UNSIGNED,
-    contractTransactionsCount: INTEGER.UNSIGNED
+    contractTransactionsCount: INTEGER.UNSIGNED,
+    transactionVolume: {
+      type: BIGINT,
+      get() {
+        let transactionVolume = this.getDataValue('transactionVolume')
+        return transactionVolume == null ? null : BigInt(transactionVolume)
+      },
+      set(transactionVolume) {
+        if (transactionVolume != null) {
+          this.setDataValue('transactionVolume', transactionVolume.toString())
+        }
+      }
+    }
   }, {freezeTableName: true, underscored: true, timestamps: false})
 
   Block.associate = () => {
