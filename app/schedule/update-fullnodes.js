@@ -2,7 +2,7 @@ module.exports = app => ({
   schedule: {
     cron: '4-59/5 * * * *',
     type: 'worker',
-    disable: app.config.enableFullnodes
+    disable: !app.config.enableFullnodes
   },
   async task(ctx) {
     let fullNodes = await ctx.service.misc.getFullNodes()
