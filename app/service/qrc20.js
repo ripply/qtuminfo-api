@@ -433,6 +433,7 @@ class QRC20Service extends Service {
           height: blockHeight,
           timestamp: header.timestamp
         },
+        confirmations: this.app.blockchainInfo.tip.height - blockHeight + 1,
         tokens: []
       }
       for (let log of logs) {
@@ -526,6 +527,7 @@ class QRC20Service extends Service {
           blockHeight: transaction.blockHeight,
           blockHash: transaction.blockHash,
           timestamp: transaction.timestamp,
+          confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
           token: {
             name: transaction.name.toString(),
             symbol: transaction.symbol.toString(),
@@ -590,6 +592,7 @@ class QRC20Service extends Service {
           blockHeight: transaction.blockHeight,
           blockHash: transaction.blockHash,
           timestamp: transaction.timestamp,
+          confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
           ...from && typeof from === 'object' ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
           ...to && typeof to === 'object' ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
           value: BigInt(`0x${transaction.data.toString('hex')}`)

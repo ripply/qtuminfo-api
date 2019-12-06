@@ -258,6 +258,7 @@ class AddressController extends Controller {
         blockHash: tx.block.hash.toString('hex'),
         blockHeight: tx.block.height,
         timestamp: tx.block.timestamp,
+        confirmations: tx.confirmations,
         tokens: tx.tokens.map(item => ({
           address: item.addressHex.toString('hex'),
           addressHex: item.addressHex.toString('hex'),
