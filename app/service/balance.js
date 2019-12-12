@@ -95,7 +95,7 @@ class BalanceService extends Service {
 
   async getBalanceHistory(ids, {nonZero = false} = {}) {
     if (ids.length === 0) {
-      return []
+      return {totalCount: 0, transactions: []}
     }
     const db = this.ctx.model
     const {sql} = this.ctx.helper
