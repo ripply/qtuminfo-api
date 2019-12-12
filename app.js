@@ -103,16 +103,30 @@ module.exports = app => {
     app.blockchainInfo.tip = tip
     namespace.emit('tip', tip)
     let ctx = app.createAnonymousContext()
-    let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
-    for (let id of transactions) {
-      namespace.to(`transaction/${id}`).emit('transaction/confirm', id)
-    }
-    let list = await ctx.service.block.getBlockAddressTransactions(tip.height)
-    for (let i = 0; i < transactions.length; ++i) {
-      for (let address of list[i] || []) {
-        namespace.to(`address/${address}`).emit('address/transaction', {address, id: transactions[i]})
-      }
-    }
+    await Promise.all([
+      (async () => {
+        let ids = await ctx.service.transaction.getRecentTransactions()
+        let transactions = await Promise.all(ids.map(
+          id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
+        ))
+        transactions = await Promise.all(transactions.map(
+          tx => ctx.service.transaction.transformTransaction(tx, {brief: true})
+        ))
+        namespace.to('transaction').emit('recent-transactions', transactions)
+      })(),
+      (async () => {
+        let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
+        for (let id of transactions) {
+          namespace.to(`transaction/${id}`).emit('transaction/confirm', id)
+        }
+        let list = await ctx.service.block.getBlockAddressTransactions(tip.height)
+        for (let i = 0; i < transactions.length; ++i) {
+          for (let address of list[i] || []) {
+            namespace.to(`address/${address}`).emit('address/transaction', {address, id: transactions[i]})
+          }
+        }
+      })()
+    ])
   })
 
   app.messenger.on('socket/reorg/block-tip', tip => {
