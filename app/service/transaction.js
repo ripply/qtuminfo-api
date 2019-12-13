@@ -477,20 +477,16 @@ class TransactionService extends Service {
   }
 
   async getAllTransactions() {
-    const db = this.ctx.model
-    const {Transaction} = db
-    const {sql} = this.ctx.helper
+    const {Transaction} = this.ctx.model
     let {limit, offset} = this.ctx.state.pagination
     let totalCount = await Transaction.count({transaction: this.ctx.state.transaction})
-    let list = await db.query(sql`
-      SELECT transaction.id AS id FROM transaction, (
-        SELECT _id FROM transaction
-        ORDER BY block_height DESC, index_in_block DESC, _id DESC
-        LIMIT ${offset}, ${limit}
-      ) list
-      WHERE transaction._id = list._id
-      ORDER BY transaction.block_height DESC, transaction.index_in_block DESC, transaction._id DESC
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    let list = await Transaction.findAll({
+      attributes: ['id'],
+      order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
+      offset,
+      limit,
+      transaction: this.ctx.state.transaction
+    })
     return {totalCount, ids: list.map(({id}) => id)}
   }
 
@@ -553,7 +549,7 @@ class TransactionService extends Service {
       .map(output => output.value)
       .reduce((x, y) => x + y, 0n)
     let inputs = transaction.inputs.map((input, index) => this.transformInput(input, index, transaction))
-    let outputs = transaction.outputs.map((output, index) => this.transformOutput(output, index))
+    let outputs = await Promise.all(transaction.outputs.map((output, index) => this.transformOutput(output, index)))
 
     let [qrc20TokenTransfers, qrc20TokenUnconfirmedTransfers, qrc721TokenTransfers] = await Promise.all([
       this.transformQRC20Transfers(transaction.outputs),
@@ -629,8 +625,10 @@ class TransactionService extends Service {
     return result
   }
 
-  transformOutput(output) {
-    const {OutputScript} = this.app.qtuminfo.lib
+  async transformOutput(output) {
+    const {OutputScript, Solidity} = this.app.qtuminfo.lib
+    const db = this.ctx.model
+    const {sql} = this.ctx.helper
     let scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
     let type = scriptPubKey.isEmpty() ? 'empty' : scriptPubKey.type
     let result = {
@@ -663,6 +661,54 @@ class TransactionService extends Service {
           topics: log.topics.map(topic => topic.toString('hex')),
           data: log.data.toString('hex')
         }))
+      }
+      if ([OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
+        let byteCode = scriptPubKey.byteCode
+        if (Buffer.compare(byteCode, Buffer.alloc(1)) === 0) {
+          let fullABIList = await db.query(sql`
+            SELECT state_mutability FROM evm_function_abi
+            WHERE id = ${Buffer.alloc(0)} AND type = 'fallback' AND (
+              contract_tag IS NULL OR contract_tag IN (
+                SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
+              )
+            )
+          `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+          for (let {state_mutability: stateMutability} of fullABIList) {
+            result.receipt.abi = {
+              type: 'fallback',
+              name: '',
+              inputs: [],
+              stateMutability
+            }
+            break
+          }
+        } else {
+          let fullABIList = await db.query(sql`
+            SELECT type, name, inputs, state_mutability FROM evm_function_abi
+            WHERE id = ${byteCode.slice(0, 4)} AND (
+              contract_tag IS NULL OR contract_tag IN (
+                SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
+              )
+            )
+          `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+          for (let {type, name, inputs, state_mutability: stateMutability} of fullABIList) {
+            let abi = new Solidity.MethodABI({type, name, inputs, stateMutability})
+            try {
+              let abiResult = abi.decodeInputs(byteCode.slice(4))
+              result.receipt.abi = {
+                type,
+                name,
+                inputs: inputs.map((input, index) => ({
+                  name: input.name,
+                  type: input.type,
+                  value: this.decodeSolitityParams(abiResult[index], input.type)
+                })),
+                stateMutability
+              }
+              break
+            } catch (err) {}
+          }
+        }
       }
     }
     return result
@@ -1012,6 +1058,13 @@ class TransactionService extends Service {
       result.push(log.topic4)
     }
     return result
+  }
+
+  decodeSolitityParams(value, type) {
+    if (type.startsWith('uint') || type.startsWith('int')) {
+      return value.toString()
+    }
+    return value
   }
 }
 
