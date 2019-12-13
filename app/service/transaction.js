@@ -654,18 +654,12 @@ class TransactionService extends Service {
         contractAddress: output.evmReceipt.contractAddressHex.toString('hex'),
         contractAddressHex: output.evmReceipt.contractAddressHex.toString('hex'),
         excepted: output.evmReceipt.excepted,
-        exceptedMessage: output.evmReceipt.exceptedMessage,
-        logs: output.evmReceipt.logs.map(log => ({
-          address: log.addressHex.toString('hex'),
-          addressHex: log.addressHex.toString('hex'),
-          topics: log.topics.map(topic => topic.toString('hex')),
-          data: log.data.toString('hex')
-        }))
+        exceptedMessage: output.evmReceipt.exceptedMessage
       }
       if ([OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
         let byteCode = scriptPubKey.byteCode
         if (Buffer.compare(byteCode, Buffer.alloc(1)) === 0) {
-          let fullABIList = await db.query(sql`
+          let abiList = await db.query(sql`
             SELECT state_mutability FROM evm_function_abi
             WHERE id = ${Buffer.alloc(0)} AND type = 'fallback' AND (
               contract_tag IS NULL OR contract_tag IN (
@@ -673,7 +667,7 @@ class TransactionService extends Service {
               )
             )
           `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
-          for (let {state_mutability: stateMutability} of fullABIList) {
+          for (let {state_mutability: stateMutability} of abiList) {
             result.receipt.abi = {
               type: 'fallback',
               name: '',
@@ -683,7 +677,7 @@ class TransactionService extends Service {
             break
           }
         } else {
-          let fullABIList = await db.query(sql`
+          let abiList = await db.query(sql`
             SELECT type, name, inputs, state_mutability FROM evm_function_abi
             WHERE id = ${byteCode.slice(0, 4)} AND (
               contract_tag IS NULL OR contract_tag IN (
@@ -691,7 +685,7 @@ class TransactionService extends Service {
               )
             )
           `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
-          for (let {type, name, inputs, state_mutability: stateMutability} of fullABIList) {
+          for (let {type, name, inputs, state_mutability: stateMutability} of abiList) {
             let abi = new Solidity.MethodABI({type, name, inputs, stateMutability})
             try {
               let abiResult = abi.decodeInputs(byteCode.slice(4))
@@ -709,6 +703,41 @@ class TransactionService extends Service {
             } catch (err) {}
           }
         }
+      }
+      result.receipt.logs = []
+      for (let {addressHex, topics, data} of output.evmReceipt.logs) {
+        let log = {
+          address: addressHex.toString('hex'),
+          addressHex: addressHex.toString('hex'),
+          topics: topics.map(topic => topic.toString('hex')),
+          data: data.toString('hex')
+        }
+        let abiList = await db.query(sql`
+          SELECT name, inputs, anonymous FROM evm_event_abi
+          WHERE (id = ${topics[0] || Buffer.alloc(0)} OR anonymous = FALSE) AND (
+            contract_tag IS NULL OR contract_tag IN (
+              SELECT tag FROM contract_tag WHERE contract_address = ${addressHex}
+            )
+          )
+        `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+        for (let {name, inputs, anonymous} of abiList) {
+          let abi = new Solidity.EventABI({name, inputs, anonymous})
+          try {
+            let abiResult = abi.decode({topics: anonymous ? topics : topics.slice(1), data})
+            log.abi = {
+              name,
+              inputs: inputs.map((input, index) => ({
+                name: input.name,
+                type: input.type,
+                indexed: input.indexed,
+                value: this.decodeSolitityParams(abiResult[index], input.type)
+              })),
+              anonymous: Boolean(anonymous)
+            }
+            break
+          } catch (err) {}
+        }
+        result.receipt.logs.push(log)
       }
     }
     return result
