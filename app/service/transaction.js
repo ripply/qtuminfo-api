@@ -481,13 +481,10 @@ class TransactionService extends Service {
     const {Transaction} = db
     const {sql} = this.ctx.helper
     let {limit, offset} = this.ctx.state.pagination
-    let totalCount = await Transaction.count({transaction: this.ctx.state.transaction}) - (
-      this.app.chain.lastPoWBlockHeight === Infinity ? 1 : this.app.chain.lastPoWBlockHeight + 1
-    )
+    let totalCount = await Transaction.count({transaction: this.ctx.state.transaction})
     let list = await db.query(sql`
       SELECT transaction.id AS id FROM transaction, (
         SELECT _id FROM transaction
-        WHERE block_height > 0 AND (block_height <= ${this.app.chain.lastPoWBlockHeight} OR index_in_block > 0)
         ORDER BY block_height DESC, index_in_block DESC, _id DESC
         LIMIT ${offset}, ${limit}
       ) list
@@ -543,7 +540,7 @@ class TransactionService extends Service {
     return Buffer.from(id, 'hex')
   }
 
-  async transformTransaction(transaction, {brief = false} = {}) {
+  async transformTransaction(transaction) {
     let confirmations = transaction.block ? this.app.blockchainInfo.tip.height - transaction.block.height + 1 : 0
     let inputValue = transaction.inputs.map(input => input.value).reduce((x, y) => x + y)
     let outputValue = transaction.outputs.map(output => output.value).reduce((x, y) => x + y)
@@ -555,8 +552,8 @@ class TransactionService extends Service {
       .filter(output => output.isRefund)
       .map(output => output.value)
       .reduce((x, y) => x + y, 0n)
-    let inputs = transaction.inputs.map((input, index) => this.transformInput(input, index, transaction, {brief}))
-    let outputs = transaction.outputs.map((output, index) => this.transformOutput(output, index, {brief}))
+    let inputs = transaction.inputs.map((input, index) => this.transformInput(input, index, transaction))
+    let outputs = transaction.outputs.map((output, index) => this.transformOutput(output, index))
 
     let [qrc20TokenTransfers, qrc20TokenUnconfirmedTransfers, qrc721TokenTransfers] = await Promise.all([
       this.transformQRC20Transfers(transaction.outputs),
@@ -566,12 +563,10 @@ class TransactionService extends Service {
 
     return {
       id: transaction.id.toString('hex'),
-      ...brief ? {} : {
-        hash: transaction.hash.toString('hex'),
-        version: transaction.version,
-        lockTime: transaction.lockTime,
-        blockHash: transaction.block && transaction.block.hash.toString('hex')
-      },
+      hash: transaction.hash.toString('hex'),
+      version: transaction.version,
+      lockTime: transaction.lockTime,
+      blockHash: transaction.block && transaction.block.hash.toString('hex'),
       inputs,
       outputs,
       isCoinbase: isCoinbase(transaction.inputs[0]),
@@ -583,32 +578,30 @@ class TransactionService extends Service {
       outputValue: outputValue.toString(),
       refundValue: refundValue.toString(),
       fees: (inputValue - outputValue - refundValue + refundToValue).toString(),
-      ...brief ? {} : {
-        size: transaction.size,
-        weight: transaction.weight,
-        contractSpendSource: transaction.contractSpendSource && transaction.contractSpendSource.toString('hex'),
-        contractSpends: transaction.contractSpends.length
-          ? transaction.contractSpends.map(({inputs, outputs}) => ({
-            inputs: inputs.map(input => ({
-              address: input.addressHex.toString('hex'),
-              addressHex: input.addressHex.toString('hex'),
-              value: input.value.toString()
-            })),
-            outputs: outputs.map(output => ({
-              address: output.addressHex ? output.addressHex.toString('hex') : output.address,
-              addressHex: output.addressHex && output.addressHex.toString('hex'),
-              value: output.value.toString()
-            }))
+      size: transaction.size,
+      weight: transaction.weight,
+      contractSpendSource: transaction.contractSpendSource && transaction.contractSpendSource.toString('hex'),
+      contractSpends: transaction.contractSpends.length
+        ? transaction.contractSpends.map(({inputs, outputs}) => ({
+          inputs: inputs.map(input => ({
+            address: input.addressHex.toString('hex'),
+            addressHex: input.addressHex.toString('hex'),
+            value: input.value.toString()
+          })),
+          outputs: outputs.map(output => ({
+            address: output.addressHex ? output.addressHex.toString('hex') : output.address,
+            addressHex: output.addressHex && output.addressHex.toString('hex'),
+            value: output.value.toString()
           }))
-          : undefined
-      },
+        }))
+        : undefined,
       qrc20TokenTransfers,
       qrc20TokenUnconfirmedTransfers,
       qrc721TokenTransfers
     }
   }
 
-  transformInput(input, index, transaction, {brief}) {
+  transformInput(input, index, transaction) {
     const {InputScript, OutputScript} = this.app.qtuminfo.lib
     let scriptSig = InputScript.fromBuffer(input.scriptSig, {
       scriptPubKey: OutputScript.fromBuffer(input.scriptPubKey || Buffer.alloc(0)),
@@ -627,18 +620,16 @@ class TransactionService extends Service {
       result.isInvalidContract = input.isInvalidContract
     }
     result.scriptSig = {type: scriptSig.type}
-    if (!brief) {
-      result.scriptSig.hex = input.scriptSig.toString('hex')
-      result.scriptSig.asm = scriptSig.toString()
-      result.sequence = input.sequence
-    }
+    result.scriptSig.hex = input.scriptSig.toString('hex')
+    result.scriptSig.asm = scriptSig.toString()
+    result.sequence = input.sequence
     if (transaction.flag) {
       result.witness = input.witness.map(script => script.toString('hex'))
     }
     return result
   }
 
-  transformOutput(output, index, {brief}) {
+  transformOutput(output) {
     const {OutputScript} = this.app.qtuminfo.lib
     let scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
     let type = scriptPubKey.isEmpty() ? 'empty' : scriptPubKey.type
@@ -647,18 +638,18 @@ class TransactionService extends Service {
       address: output.addressHex ? output.addressHex.toString('hex') : output.address,
       addressHex: output.addressHex && output.addressHex.toString('hex'),
       isInvalidContract: output.isInvalidContract,
-      scriptPubKey: {type}
-    }
-    if (!brief) {
-      result.scriptPubKey.hex = output.scriptPubKey.toString('hex')
-      result.scriptPubKey.asm = scriptPubKey.toString()
-      result.isRefund = output.isRefund
+      scriptPubKey: {
+        type,
+        hex: output.scriptPubKey.toString('hex'),
+        asm: scriptPubKey.toString()
+      },
+      isRefund: output.isRefund
     }
     if (output.spentTxId) {
       result.spentTxId = output.spentTxId.toString('hex')
       result.spentIndex = output.spentIndex
     }
-    if (!brief && output.evmReceipt) {
+    if (output.evmReceipt) {
       result.receipt = {
         sender: output.evmReceipt.sender,
         gasUsed: output.evmReceipt.gasUsed,

@@ -110,7 +110,7 @@ module.exports = app => {
           id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
         ))
         transactions = await Promise.all(transactions.map(
-          tx => ctx.service.transaction.transformTransaction(tx, {brief: true})
+          tx => ctx.service.transaction.transformTransaction(tx)
         ))
         namespace.to('transaction').emit('recent-transactions', transactions)
       })(),
@@ -141,7 +141,7 @@ module.exports = app => {
     if (!transaction) {
       return
     }
-    namespace.to('mempool').emit('mempool/transaction', await ctx.service.transaction.transformTransaction(transaction, {brief: true}))
+    namespace.to('mempool').emit('mempool/transaction', await ctx.service.transaction.transformTransaction(transaction))
     let addresses = await ctx.service.transaction.getMempoolTransactionAddresses(id)
     for (let address of addresses) {
       namespace.to(`address/${address}`).emit('address/transaction', {address, id: id.toString('hex')})

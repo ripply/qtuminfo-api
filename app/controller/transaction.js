@@ -4,11 +4,10 @@ class TransactionController extends Controller {
   async transaction() {
     const {ctx} = this
     ctx.assert(ctx.params.id && /^[0-9a-f]{64}$/i.test(ctx.params.id), 404)
-    let brief = 'brief' in ctx.query
     let id = Buffer.from(ctx.params.id, 'hex')
     let transaction = await ctx.service.transaction.getTransaction(id)
     ctx.assert(transaction, 404)
-    ctx.body = await ctx.service.transaction.transformTransaction(transaction, {brief})
+    ctx.body = await ctx.service.transaction.transformTransaction(transaction)
   }
 
   async transactions() {
@@ -16,13 +15,12 @@ class TransactionController extends Controller {
     ctx.assert(ctx.params.ids, 404)
     let ids = ctx.params.ids.split(',')
     ctx.assert(ids.length <= 100 && ids.every(id => /^[0-9a-f]{64}$/i.test(id)), 404)
-    let brief = 'brief' in ctx.query
     let transactions = await Promise.all(ids.map(
       id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
     ))
     ctx.assert(transactions.every(Boolean), 404)
     ctx.body = await Promise.all(transactions.map(
-      tx => ctx.service.transaction.transformTransaction(tx, {brief})
+      tx => ctx.service.transaction.transformTransaction(tx)
     ))
   }
 
@@ -43,7 +41,7 @@ class TransactionController extends Controller {
       id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
     ))
     ctx.body = await Promise.all(transactions.map(
-      tx => ctx.service.transaction.transformTransaction(tx, {brief: true})
+      tx => ctx.service.transaction.transformTransaction(tx)
     ))
   }
 
