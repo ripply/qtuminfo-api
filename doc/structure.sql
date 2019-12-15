@@ -87,6 +87,34 @@ CREATE TABLE `contract_tag` (
   KEY `tag` (`tag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
+CREATE TABLE `evm_event_abi` (
+  `_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` binary(32) NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8 NOT NULL,
+  `inputs` json NOT NULL,
+  `anonymous` tinyint(1) NOT NULL DEFAULT '0',
+  `contract_tag` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`_id`),
+  KEY `id` (`id`),
+  KEY `name` (`name`),
+  KEY `contract_tag` (`contract_tag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+
+CREATE TABLE `evm_function_abi` (
+  `_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` binary(4) NOT NULL,
+  `type` enum('function','constructor','fallback','') CHARACTER SET utf8 NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8 NOT NULL,
+  `inputs` json NOT NULL,
+  `outputs` json NOT NULL,
+  `state_mutability` enum('pure','view','nonpayable','payable') CHARACTER SET utf8 NOT NULL,
+  `contract_tag` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`_id`),
+  KEY `id` (`id`),
+  KEY `name` (`name`),
+  KEY `contract_tag` (`contract_tag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+
 CREATE TABLE `evm_receipt` (
   `_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `transaction_id` bigint(20) unsigned NOT NULL,
