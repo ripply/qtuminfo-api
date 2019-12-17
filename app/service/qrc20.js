@@ -642,20 +642,19 @@ class QRC20Service extends Service {
     const {sql} = this.ctx.helper
     let transaction = await db.transaction()
     try {
-      let result = (await QRC20.findAll({attributes: ['contractAddress'], transaction})).map(
-        ({contractAddress}) => ({contractAddress, holders: 0, transactions: 0})
-      )
+      let result = (await QRC20.findAll({
+        attributes: ['contractAddress'],
+        order: [['contractAddress', 'ASC']],
+        transaction
+      })).map(({contractAddress}) => ({contractAddress, holders: 0, transactions: 0}))
       let balanceResults = await db.query(sql`
         SELECT contract_address AS contractAddress, COUNT(*) AS count FROM qrc20_balance
         WHERE balance != ${Buffer.alloc(32)}
-        GROUP BY contractAddress ORDER BY contractAddress
+        GROUP BY contractAddress ORDER BY contractAddress ASC
       `, {type: db.QueryTypes.SELECT, transaction})
       let i = 0
       for (let {contractAddress, count} of balanceResults) {
-        while (true) {
-          if (i >= result.length) {
-            break
-          }
+        while (i < result.length) {
           let comparison = Buffer.compare(contractAddress, result[i].contractAddress)
           if (comparison === 0) {
             result[i].holders = count
@@ -670,14 +669,11 @@ class QRC20Service extends Service {
       let transactionResults = await db.query(sql`
         SELECT address AS contractAddress, COUNT(*) AS count FROM evm_receipt_log USE INDEX (contract)
         WHERE topic1 = ${TransferABI.id}
-        GROUP BY contractAddress ORDER BY contractAddress
+        GROUP BY contractAddress ORDER BY contractAddress ASC
       `, {type: db.QueryTypes.SELECT, transaction})
       let j = 0
       for (let {contractAddress, count} of transactionResults) {
-        while (true) {
-          if (j >= result.length) {
-            break
-          }
+        while (j < result.length) {
           let comparison = Buffer.compare(contractAddress, result[j].contractAddress)
           if (comparison === 0) {
             result[j].transactions = count

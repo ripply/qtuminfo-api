@@ -26,7 +26,9 @@ class ContractController extends Controller {
         qrc721: {
           name: summary.qrc721.name,
           symbol: summary.qrc721.symbol,
-          totalSupply: summary.qrc721.totalSupply.toString()
+          totalSupply: summary.qrc721.totalSupply.toString(),
+          holders: summary.qrc721.holders,
+          transactions: summary.qrc721.transactions
         }
       } : {},
       balance: summary.balance.toString(),

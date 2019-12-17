@@ -34,7 +34,11 @@ class ContractService extends Service {
   }
 
   async getContractSummary(contractAddress, addressIds) {
-    const {Contract, Qrc20: QRC20, Qrc20Statistics: QRC20Statistics, Qrc721: QRC721} = this.ctx.model
+    const {
+      Contract,
+      Qrc20: QRC20, Qrc20Statistics: QRC20Statistics,
+      Qrc721: QRC721, Qrc721Statistics: QRC721Statistics
+    } = this.ctx.model
     const {balance: balanceService, qrc20: qrc20Service, qrc721: qrc721Service} = this.ctx.service
     let contract = await Contract.findOne({
       where: {address: contractAddress},
@@ -55,7 +59,12 @@ class ContractService extends Service {
           model: QRC721,
           as: 'qrc721',
           required: false,
-          attributes: ['name', 'symbol', 'totalSupply']
+          attributes: ['name', 'symbol', 'totalSupply'],
+          include: [{
+            model: QRC721Statistics,
+            as: 'statistics',
+            required: true
+          }]
         }
       ],
       transaction: this.ctx.state.transaction
@@ -93,7 +102,9 @@ class ContractService extends Service {
         qrc721: {
           name: contract.qrc721.name,
           symbol: contract.qrc721.symbol,
-          totalSupply: contract.qrc721.totalSupply
+          totalSupply: contract.qrc721.totalSupply,
+          holders: contract.qrc721.statistics.holders,
+          transactions: contract.qrc721.statistics.transactions
         }
       } : {},
       balance: totalReceived - totalSent,

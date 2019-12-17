@@ -128,6 +128,63 @@ class QRC721Service extends Service {
       })
     }
   }
+
+  async updateQRC721Statistics() {
+    const TransferABI = this.app.qtuminfo.lib.Solidity.qrc721ABIs.find(abi => abi.name === 'Transfer')
+    const db = this.ctx.model
+    const {Qrc721: QRC721, Qrc721Statistics: QRC721Statistics} = db
+    const {sql} = this.ctx.helper
+    let transaction = await db.transaction()
+    try {
+      let result = (await QRC721.findAll({
+        attributes: ['contractAddress'],
+        order: [['contractAddress', 'ASC']],
+        transaction
+      })).map(({contractAddress}) => ({contractAddress, holders: 0, transactions: 0}))
+      let holderResults = await db.query(sql`
+        SELECT contract_address AS contractAddress, COUNT(*) AS count FROM qrc721_token
+        GROUP BY contractAddress ORDER BY contractAddress ASC
+      `, {type: db.QueryTypes.SELECT, transaction})
+      let i = 0
+      for (let {contractAddress, count} of holderResults) {
+        while (i < result.length) {
+          let comparison = Buffer.compare(contractAddress, result[i].contractAddress)
+          if (comparison === 0) {
+            result[i].holders = count
+            break
+          } else if (comparison < 0) {
+            break
+          } else {
+            ++i
+          }
+        }
+      }
+      let transactionResults = await db.query(sql`
+        SELECT address AS contractAddress, COUNT(*) AS count FROM evm_receipt_log USE INDEX (contract)
+        WHERE topic1 = ${TransferABI.id}
+        GROUP BY contractAddress ORDER BY contractAddress
+      `, {type: db.QueryTypes.SELECT, transaction})
+      let j = 0
+      for (let {contractAddress, count} of transactionResults) {
+        while (j < result.length) {
+          let comparison = Buffer.compare(contractAddress, result[j].contractAddress)
+          if (comparison === 0) {
+            result[j].transactions = count
+            break
+          } else if (comparison < 0) {
+            break
+          } else {
+            ++j
+          }
+        }
+      }
+      await db.query(sql`DELETE FROM qrc721_statistics`, {transaction})
+      await QRC721Statistics.bulkCreate(result, {validate: false, transaction, logging: false})
+      await transaction.commit()
+    } catch (err) {
+      await transaction.rollback()
+    }
+  }
 }
 
 module.exports = QRC721Service
