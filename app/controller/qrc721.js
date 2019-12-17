@@ -20,7 +20,7 @@ class QRC721Controller extends Controller {
   async transactions() {
     const {ctx} = this
     ctx.assert(ctx.state.token.type === 'qrc721', 404)
-    let {totalCount, transactions} = await ctx.service.qrc20.getQRC20TokenTransactions(ctx.state.token.contractAddress)
+    let {totalCount, transactions} = await ctx.service.qrc721.getQRC721TokenTransactions(ctx.state.token.contractAddress)
     ctx.body = {
       totalCount,
       transactions: transactions.map(transaction => ({
@@ -34,7 +34,7 @@ class QRC721Controller extends Controller {
         fromHex: transaction.fromHex && transaction.fromHex.toString('hex'),
         to: transaction.to,
         toHex: transaction.toHex && transaction.toHex.toString('hex'),
-        value: transaction.value.toString()
+        tokenId: transaction.tokenId
       }))
     }
   }
