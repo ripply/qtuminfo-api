@@ -3,7 +3,7 @@ const {Service} = require('egg')
 class MiscService extends Service {
   async classify(id) {
     const db = this.ctx.model
-    const {Block, Transaction, Contract, Qrc20: QRC20, where, fn, literal} = db
+    const {Block, Transaction, Contract, Qrc20: QRC20, Qrc721: QRC721, where, fn, literal} = db
     const {or: $or, like: $like} = this.app.Sequelize.Op
     const {Address} = this.app.qtuminfo.lib
     const {sql} = this.ctx.helper
@@ -80,13 +80,54 @@ class MiscService extends Service {
         SELECT contract.address_string AS address, contract.address AS addressHex FROM (
           SELECT contract_address FROM qrc20_statistics
           WHERE contract_address IN ${qrc20Results}
-          ORDER BY transactions DESC LIMIT 1
+          ORDER BY holders DESC LIMIT 1
         ) qrc20_balance
         INNER JOIN contract ON contract.address = qrc20_balance.contract_address
       `, {type: db.QueryTypes.SELECT, transaction})
       return {
         type: 'contract',
         contractType: 'qrc20',
+        address: addressHex.toString('hex'),
+        addressHex: addressHex.toString('hex')
+      }
+    }
+
+    let qrc721Results = (await QRC721.findAll({
+      where: {
+        [$or]: [
+          where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), id.toLowerCase()),
+          where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), id.toLowerCase())
+        ]
+      },
+      attributes: ['contractAddress'],
+      transaction
+    })).map(qrc721 => qrc721.contractAddress)
+    if (qrc721Results.length === 0) {
+      qrc721Results = (await QRC721.findAll({
+        where: {
+          [$or]: [
+            where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), {[$like]: ['', ...id.toLowerCase(), ''].join('%')}),
+            where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`}),
+            where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: ['', ...id.toLowerCase(), ''].join('%')}),
+            where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`})
+          ]
+        },
+        attributes: ['contractAddress'],
+        transaction
+      })).map(qrc721 => qrc721.contractAddress)
+    }
+    if (qrc721Results.length) {
+      let [{addressHex}] = await db.query(sql`
+        SELECT contract.address_string AS address, contract.address AS addressHex FROM (
+          SELECT contract_address FROM qrc721_statistics
+          WHERE contract_address IN ${qrc721Results}
+          ORDER BY holders DESC LIMIT 1
+        ) qrc721_token
+        INNER JOIN contract ON contract.address = qrc721_token.contract_address
+      `, {type: db.QueryTypes.SELECT, transaction})
+      return {
+        type: 'contract',
+        contractType: 'qrc721',
         address: addressHex.toString('hex'),
         addressHex: addressHex.toString('hex')
       }
