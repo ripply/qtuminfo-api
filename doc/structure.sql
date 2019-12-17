@@ -205,6 +205,15 @@ CREATE TABLE `header` (
   KEY `timestamp` (`timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `qtuminfo_translation` (
+  `_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `locale` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `translations` json NOT NULL,
+  `timestamp` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`_id`),
+  KEY `locale` (`locale`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE `qrc20` (
   `contract_address` binary(20) NOT NULL,
   `name` blob NOT NULL,
