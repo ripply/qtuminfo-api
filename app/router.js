@@ -188,6 +188,11 @@ module.exports = app => {
     paginationMiddleware,
     controller.qrc721.list
   )
+  router.get(
+    '/qrc721/:token/txs',
+    middleware.contract('token'), paginationMiddleware, blockFilterMiddleware,
+    controller.qrc721.transactions
+  )
 
   router.get(`/search`, controller.misc.classify)
   router.get(
@@ -208,9 +213,7 @@ module.exports = app => {
   router.get('/stats/address-growth', controller.statistics.addressGrowth)
 
   router.get('/bulletin', controller.bulletin.list)
-
   router.post('/feedback', controller.feedback.create)
-
   router.get('/captcha', controller.captcha.create)
 
   io.route('subscribe', io.controller.default.subscribe)

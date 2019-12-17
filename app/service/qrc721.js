@@ -68,6 +68,66 @@ class QRC721Service extends Service {
       count: item.count
     }))
   }
+
+  async getQRC721TokenTransactions(contractAddress) {
+    const TransferABI = this.app.qtuminfo.lib.Solidity.qrc721ABIs.find(abi => abi.name === 'Transfer')
+    const db = this.ctx.model
+    const {EvmReceiptLog: EVMReceiptLog} = db
+    const {sql} = this.ctx.helper
+    let {limit, offset, reversed = true} = this.ctx.state.pagination
+    let order = reversed ? 'DESC' : 'ASC'
+
+    let totalCount = await EVMReceiptLog.count({
+      where: {
+        ...this.ctx.service.block.getBlockFilter(),
+        address: contractAddress,
+        topic1: TransferABI.id
+      },
+      transactions: this.ctx.state.transaction
+    })
+    let transactions = await db.query(sql`
+      SELECT
+        transaction.id AS transactionId,
+        evm_receipt.output_index AS outputIndex,
+        evm_receipt.block_height AS blockHeight,
+        header.hash AS blockHash,
+        header.timestamp AS timestamp,
+        list.topic2 AS topic2,
+        list.topic3 AS topic3,
+        list.topic4 AS topic4
+      FROM (
+        SELECT _id, receipt_id, topic2, topic3, topic4 FROM evm_receipt_log
+        WHERE address = ${contractAddress} AND topic1 = ${TransferABI.id} AND ${this.ctx.service.block.getRawBlockFilter()}
+        ORDER BY _id ${{raw: order}} LIMIT ${offset}, ${limit}
+      ) list
+      INNER JOIN evm_receipt ON evm_receipt._id = list.receipt_id
+      INNER JOIN transaction ON transaction._id = evm_receipt.transaction_id
+      INNER JOIN header ON header.height = evm_receipt.block_height
+      ORDER BY list._id ${{raw: order}}
+    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+
+    let addresses = await this.ctx.service.contract.transformHexAddresses(
+      transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
+    )
+    return {
+      totalCount,
+      transactions: transactions.map((transaction, index) => {
+        let from = addresses[index * 2]
+        let to = addresses[index * 2 + 1]
+        return {
+          transactionId: transaction.transactionId,
+          outputIndex: transaction.outputIndex,
+          blockHeight: transaction.blockHeight,
+          blockHash: transaction.blockHash,
+          timestamp: transaction.timestamp,
+          confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
+          ...from && typeof from === 'object' ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
+          ...to && typeof to === 'object' ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
+          tokenId: transaction.topic4.toString('hex')
+        }
+      })
+    }
+  }
 }
 
 module.exports = QRC721Service
