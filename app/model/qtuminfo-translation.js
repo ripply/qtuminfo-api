@@ -12,6 +12,7 @@ module.exports = app => {
     },
     locale: STRING(10),
     translations: JSON,
+    email: STRING(40),
     timestamp: {
       type: DATE,
       defaultValue: Sequelize.fn('NOW')
