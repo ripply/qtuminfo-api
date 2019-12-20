@@ -266,7 +266,7 @@ CREATE TABLE `qtuminfo_translation` (
   `timestamp` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`_id`),
   KEY `locale` (`locale`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `rich_list` (
   `address_id` bigint(20) unsigned NOT NULL,
