@@ -490,6 +490,19 @@ class TransactionService extends Service {
     return {totalCount, ids: list.map(({id}) => id)}
   }
 
+  async getLatestTransactions(count = 20) {
+    const {Transaction} = this.ctx.model
+    let totalCount = await Transaction.count({transaction: this.ctx.state.transaction})
+    let list = await Transaction.findAll({
+      attributes: ['id'],
+      order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
+      offset: 0,
+      limit: count,
+      transaction: this.ctx.state.transaction
+    })
+    return {totalCount, ids: list.map(({id}) => id)}
+  }
+
   async getMempoolTransactionAddresses(id) {
     const {Address: RawAddress} = this.app.qtuminfo.lib
     const {Address, Transaction, BalanceChange, EvmReceipt: EVMReceipt} = this.ctx.model

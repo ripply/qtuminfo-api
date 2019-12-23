@@ -120,6 +120,16 @@ module.exports = app => {
         namespace.to('transaction').emit('recent-transactions', transactions)
       })(),
       (async () => {
+        let {totalCount, ids} = await ctx.service.transaction.getLatestTransactions()
+        let transactions = await Promise.all(ids.map(
+          id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
+        ))
+        transactions = await Promise.all(transactions.map(
+          tx => ctx.service.transaction.transformTransaction(tx)
+        ))
+        namespace.to('transaction').emit('latest-transactions', {totalCount, transactions})
+      })(),
+      (async () => {
         let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
         for (let id of transactions) {
           namespace.to(`transaction/${id}`).emit('transaction/confirm', id)
