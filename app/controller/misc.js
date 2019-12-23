@@ -21,18 +21,20 @@ class MiscController extends Controller {
 
   async biggestMiners() {
     let {ctx} = this
-    let lastNBlocks = null
-    if (ctx.query.blocks && /^[1-9]\d*$/.test(ctx.query.blocks)) {
-      lastNBlocks = Number.parseInt(ctx.query.blocks)
+    let lastNDays = null
+    if (ctx.query.days && /^[1-9]\d*$/.test(ctx.query.days)) {
+      lastNDays = Number.parseInt(ctx.query.days)
     }
-    let {totalCount, list} = await ctx.service.block.getBiggestMiners(lastNBlocks)
+    let {totalCount, list, blocks} = await ctx.service.block.getBiggestMiners(lastNDays)
     ctx.body = {
       totalCount,
       list: list.map(item => ({
         address: item.address,
         blocks: item.blocks,
+        reward: item.reward,
         balance: item.balance.toString()
-      }))
+      })),
+      blocks
     }
   }
 

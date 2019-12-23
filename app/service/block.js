@@ -263,24 +263,49 @@ class BlockService extends Service {
     return result
   }
 
-  async getBiggestMiners(lastNBlocks) {
-    const fromBlock = this.app.chain.lastPoWBlockHeight >= 0xffffffff ? this.app.chain.lastPoWBlockHeight : 1
+  async getBiggestMiners(lastNDays = null) {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
     const {Block} = db
     const {gte: $gte} = this.app.Sequelize.Op
-    let fromBlockHeight = lastNBlocks == null ? fromBlock : Math.max(this.app.blockchainInfo.height - lastNBlocks + 1, fromBlock)
+    const blockHeightOffset = this.app.chain.lastPoWBlockHeight >= 0xffffffff ? 1 : this.app.chain.lastPoWBlockHeight + 1
+    let fromBlock = blockHeightOffset
+    let timestamp = Math.floor(Date.now() / 1000)
+    if (lastNDays != null) {
+      let [{fromBlockHeight}] = await db.query(sql`
+        SELECT MIN(height) as fromBlockHeight FROM header
+        WHERE timestamp > ${timestamp - 86400 * lastNDays}
+      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+      if (fromBlockHeight > fromBlock) {
+        fromBlock = fromBlockHeight
+      }
+    }
     let {limit, offset} = this.ctx.state.pagination
     let totalCount = await Block.count({
-      where: {height: {[$gte]: fromBlockHeight}},
+      where: {height: {[$gte]: fromBlock}},
       distinct: true,
       col: 'minerId',
       transaction: this.ctx.state.transaction
     })
     let list = await db.query(sql`
-      SELECT address.string AS address, list.blocks AS blocks, rich_list.balance AS balance FROM (
-        SELECT miner_id, COUNT(*) AS blocks FROM block
-        WHERE height >= ${fromBlockHeight}
+      SELECT
+        address.string AS address,
+        list.blocks AS blocks,
+        list.reward AS reward,
+        rich_list.balance AS balance
+      FROM (
+        SELECT
+          miner_id,
+          COUNT(*) AS blocks,
+          4 * SUM(
+            IF(
+              height >= ${blockHeightOffset} + 985500 * 7,
+              0,
+              POW(2, -FLOOR((height - ${blockHeightOffset}) / 985500))
+            )
+          ) AS reward
+        FROM block
+        WHERE height >= ${fromBlock}
         GROUP BY miner_id
         ORDER BY blocks DESC
         LIMIT ${offset}, ${limit}
@@ -291,7 +316,8 @@ class BlockService extends Service {
     `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
     return {
       totalCount,
-      list: list.map(({address, blocks, balance}) => ({address, blocks, balance: BigInt(balance || 0)}))
+      list: list.map(({address, blocks, reward, balance}) => ({address, blocks, reward, balance: BigInt(balance || 0)})),
+      blocks: this.app.blockchainInfo.tip.height - fromBlock + 1
     }
   }
 
