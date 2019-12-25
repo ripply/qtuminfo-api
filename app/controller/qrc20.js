@@ -33,6 +33,8 @@ class QRC20Controller extends Controller {
         timestamp: transaction.timestamp,
         confirmations: transaction.confirmations,
         token: {
+          address: transaction.token.address.toString('hex'),
+          addressHex: transaction.token.addressHex,
           name: transaction.token.name,
           symbol: transaction.token.symbol,
           decimals: transaction.token.decimals

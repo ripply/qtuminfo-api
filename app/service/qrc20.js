@@ -494,6 +494,7 @@ class QRC20Service extends Service {
         evm_receipt.block_height AS blockHeight,
         header.hash AS blockHash,
         header.timestamp AS timestamp,
+        contract.address AS addressHex,
         qrc20.name AS name,
         qrc20.symbol AS symbol,
         qrc20.decimals AS decimals,
@@ -508,6 +509,7 @@ class QRC20Service extends Service {
       INNER JOIN evm_receipt_log ON evm_receipt_log._id = list._id
       INNER JOIN evm_receipt ON evm_receipt._id = evm_receipt_log.receipt_id
       INNER JOIN qrc20 ON qrc20.contract_address = evm_receipt_log.address
+      INNER JOIN contract ON contract.address = evm_receipt_log.address
       INNER JOIN transaction ON transaction._id = evm_receipt.transaction_id
       INNER JOIN header ON header.height = evm_receipt.block_height
       ORDER BY list._id ${{raw: order}}
@@ -529,6 +531,8 @@ class QRC20Service extends Service {
           timestamp: transaction.timestamp,
           confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
           token: {
+            address: transaction.addressHex,
+            addressHex: transaction.addressHex.toString('hex'),
             name: transaction.name.toString(),
             symbol: transaction.symbol.toString(),
             decimals: transaction.decimals
