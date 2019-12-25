@@ -3,10 +3,7 @@ const {Service} = require('egg')
 class FeedbackService extends Service {
   async createFeedback(name, email, content) {
     const {Feedback} = this.ctx.model
-    let feedback = await Feedback.create(
-      {name, email, content},
-      {transaction: this.ctx.state.transaction}
-    )
+    let feedback = await Feedback.create({name, email, content})
     await this.sendMail(feedback)
   }
 

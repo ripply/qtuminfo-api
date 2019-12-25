@@ -25,7 +25,7 @@ class AddressService extends Service {
       qrc20Service.getAllQRC20Balances(hexAddresses),
       qrc721Service.getAllQRC721Balances(hexAddresses),
       balanceService.getBalanceRanking(addressIds),
-      Block.count({where: {minerId: {[$in]: p2pkhAddressIds}, height: {[$gt]: 0}}, transaction: this.ctx.state.transaction}),
+      Block.count({where: {minerId: {[$in]: p2pkhAddressIds}, height: {[$gt]: 0}}}),
       this.getAddressTransactionCount(addressIds, rawAddresses),
     ])
     return {
@@ -72,7 +72,7 @@ class AddressService extends Service {
             OR (contract.type = 'qrc721' AND log.topic4 IS NOT NULL)
           )
       ) list
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     return count
   }
 
@@ -115,7 +115,7 @@ class AddressService extends Service {
         LIMIT ${offset}, ${limit}
       ) list, transaction tx
       WHERE tx._id = list._id
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(({id}) => id)
+    `, {type: db.QueryTypes.SELECT})).map(({id}) => id)
     return {totalCount, transactions}
   }
 
@@ -128,8 +128,7 @@ class AddressService extends Service {
         addressId: {[$in]: addressIds}
       },
       distinct: true,
-      col: 'transactionId',
-      transaction: this.ctx.state.transaction
+      col: 'transactionId'
     })
   }
 
@@ -147,7 +146,7 @@ class AddressService extends Service {
         WHERE address_id = ${addressIds[0]} AND ${this.ctx.service.block.getRawBlockFilter()}
         ORDER BY block_height ${{raw: order}}, index_in_block ${{raw: order}}, transaction_id ${{raw: order}}
         LIMIT ${offset}, ${limit}
-      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(({_id}) => _id)
+      `, {type: db.QueryTypes.SELECT})).map(({_id}) => _id)
     } else {
       transactionIds = (await db.query(sql`
         SELECT _id FROM (
@@ -158,7 +157,7 @@ class AddressService extends Service {
         ) list
         ORDER BY block_height ${{raw: order}}, index_in_block ${{raw: order}}, _id ${{raw: order}}
         LIMIT ${offset}, ${limit}
-      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(({_id}) => _id)
+      `, {type: db.QueryTypes.SELECT})).map(({_id}) => _id)
     }
 
     let transactions = await Promise.all(transactionIds.map(async transactionId => {
@@ -182,7 +181,7 @@ class AddressService extends Service {
       SELECT COUNT(DISTINCT(_id)) AS count FROM evm_receipt
       WHERE (sender_type, sender_data) IN ${rawAddresses.map(address => [Address.parseType(address.type), address.data])}
         AND ${this.ctx.service.block.getRawBlockFilter()} AND ${{raw: contractFilter}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     return count
   }
 
@@ -204,7 +203,7 @@ class AddressService extends Service {
         AND ${this.ctx.service.block.getRawBlockFilter()} AND ${{raw: contractFilter}}
       ORDER BY block_height ${{raw: order}}, index_in_block ${{raw: order}}, transaction_id ${{raw: order}}, output_index ${{raw: order}}
       LIMIT ${offset}, ${limit}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(({_id}) => _id)
+    `, {type: db.QueryTypes.SELECT})).map(({_id}) => _id)
     let transactions = await Promise.all(receiptIds.map(async receiptId => {
       let transaction = await this.ctx.service.transaction.getContractTransaction(receiptId)
       return Object.assign(transaction, {
@@ -230,8 +229,7 @@ class AddressService extends Service {
           {topic2: {[$in]: topicAddresses}},
           {topic3: {[$in]: topicAddresses}}
         ]
-      },
-      transaction: this.ctx.state.transaction
+      }
     })
   }
 
@@ -269,7 +267,7 @@ class AddressService extends Service {
       INNER JOIN transaction ON transaction._id = receipt.transaction_id
       INNER JOIN qrc20 ON qrc20.contract_address = log.address
       ORDER BY list._id ${{raw: order}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
 
     let addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
@@ -344,8 +342,7 @@ class AddressService extends Service {
             }]
           }]
         },
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
 
     transactions = transactions.filter(transaction => {
@@ -411,8 +408,7 @@ class AddressService extends Service {
           required: true,
           attributes: ['string']
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
     return utxos.map(utxo => ({
       transactionId: utxo.outputTransaction.id,

@@ -8,10 +8,7 @@ class QRC20Service extends Service {
     const {gt: $gt} = this.app.Sequelize.Op
     let {limit, offset} = this.ctx.state.pagination
 
-    let totalCount = await QRC20Statistics.count({
-      where: {transactions: {[$gt]: 0}},
-      transaction: this.ctx.state.transaction
-    })
+    let totalCount = await QRC20Statistics.count({where: {transactions: {[$gt]: 0}}})
     let list = await db.query(sql`
       SELECT
         contract.address_string AS address, contract.address AS addressHex,
@@ -28,7 +25,7 @@ class QRC20Service extends Service {
       INNER JOIN qrc20 USING (contract_address)
       INNER JOIN contract ON contract.address = list.contract_address
       ORDER BY transactions DESC
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
 
     return {
       totalCount,
@@ -72,8 +69,7 @@ class QRC20Service extends Service {
           where: {address: {[$in]: hexAddresses}},
           attributes: ['balance']
         }]
-      }],
-      transaction: this.ctx.state.transaction
+      }]
     })
     let mapping = new Map(list.map(item => [
       item.contract.addressString,
@@ -122,8 +118,7 @@ class QRC20Service extends Service {
             }]
           }]
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
     for (let item of unconfirmedList) {
       let scriptPubKey = OutputScript.fromBuffer(item.output.scriptPubKey)
@@ -190,13 +185,11 @@ class QRC20Service extends Service {
     }
     let token = await QRC20.findOne({
       where: {contractAddress: tokenAddress},
-      attributes: ['name', 'symbol', 'decimals'],
-      transaction: this.ctx.state.transaction
+      attributes: ['name', 'symbol', 'decimals']
     })
     let list = await QRC20Balance.findAll({
       where: {contractAddress: tokenAddress, address: {[$in]: hexAddresses}},
-      attributes: ['balance'],
-      transaction: this.ctx.state.transaction
+      attributes: ['balance']
     })
     let unconfirmedList = await EVMReceipt.findAll({
       where: {blockHeight: 0xffffffff},
@@ -223,8 +216,7 @@ class QRC20Service extends Service {
             attributes: []
           }]
         }]
-      }],
-      transaction: this.ctx.state.transaction
+      }]
     })
     let unconfirmed = {
       received: 0n,
@@ -291,7 +283,7 @@ class QRC20Service extends Service {
       SELECT COUNT(DISTINCT(receipt.transaction_id)) AS totalCount
       FROM evm_receipt receipt, evm_receipt_log log, qrc20
       WHERE receipt._id = log.receipt_id AND log.address = qrc20.contract_address AND ${{raw: logFilter}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     if (totalCount === 0) {
       return {totalCount: 0, transactions: []}
     }
@@ -304,7 +296,7 @@ class QRC20Service extends Service {
       ORDER BY receipt.block_height ${{raw: order}}, receipt.index_in_block ${{raw: order}},
         receipt.transaction_id ${{raw: order}}, receipt.output_index ${{raw: order}}
       LIMIT ${offset}, ${limit}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(({id}) => id)
+    `, {type: db.QueryTypes.SELECT})).map(({id}) => id)
 
     let list = await EVMReceipt.findAll({
       where: {transactionId: {[$in]: ids}},
@@ -353,8 +345,7 @@ class QRC20Service extends Service {
           ]
         }
       ],
-      order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order], ['outputIndex', order]],
-      transaction: this.ctx.state.transaction
+      order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order], ['outputIndex', order]]
     })
 
     if (!reversed) {
@@ -373,8 +364,7 @@ class QRC20Service extends Service {
           as: 'contract',
           required: true,
           attributes: ['addressString']
-        }],
-        transaction: this.ctx.state.transaction
+        }]
       })
       for (let {balance, contract} of intialBalanceList) {
         let address = contract.addressString
@@ -408,8 +398,7 @@ class QRC20Service extends Service {
             required: true,
             attributes: ['addressString']
           }
-        ],
-        transaction: this.ctx.state.transaction
+        ]
       })
       for (let log of latestLogs) {
         let address = log.contract.addressString
@@ -486,7 +475,7 @@ class QRC20Service extends Service {
       SELECT COUNT(*) AS totalCount
       FROM qrc20, evm_receipt_log log
       WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     let transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
@@ -513,7 +502,7 @@ class QRC20Service extends Service {
       INNER JOIN transaction ON transaction._id = evm_receipt.transaction_id
       INNER JOIN header ON header.height = evm_receipt.block_height
       ORDER BY list._id ${{raw: order}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
 
     let addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
@@ -558,8 +547,7 @@ class QRC20Service extends Service {
         ...this.ctx.service.block.getBlockFilter(),
         address: contractAddress,
         topic1: TransferABI.id
-      },
-      transactions: this.ctx.state.transaction
+      }
     })
     let transactions = await db.query(sql`
       SELECT
@@ -580,7 +568,7 @@ class QRC20Service extends Service {
       INNER JOIN transaction ON transaction._id = evm_receipt.transaction_id
       INNER JOIN header ON header.height = evm_receipt.block_height
       ORDER BY list._id ${{raw: order}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
 
     let addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
@@ -612,16 +600,14 @@ class QRC20Service extends Service {
     let {limit, offset} = this.ctx.state.pagination
 
     let totalCount = await QRC20Balance.count({
-      where: {contractAddress, balance: {[$ne]: Buffer.alloc(32)}},
-      transaction: this.ctx.state.transaction
+      where: {contractAddress, balance: {[$ne]: Buffer.alloc(32)}}
     })
     let list = await QRC20Balance.findAll({
       where: {contractAddress, balance: {[$ne]: Buffer.alloc(32)}},
       attributes: ['address', 'balance'],
       order: [['balance', 'DESC']],
       limit,
-      offset,
-      transaction: this.ctx.state.transaction
+      offset
     })
     let addresses = await this.ctx.service.contract.transformHexAddresses(list.map(item => item.address))
     return {

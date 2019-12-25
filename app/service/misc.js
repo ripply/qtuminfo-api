@@ -7,7 +7,6 @@ class MiscService extends Service {
     const {or: $or, like: $like} = this.app.Sequelize.Op
     const {Address} = this.app.qtuminfo.lib
     const {sql} = this.ctx.helper
-    const transaction = this.ctx.state.transaction
 
     if (/^(0|[1-9]\d{0,9})$/.test(id)) {
       let height = Number.parseInt(id)
@@ -23,8 +22,7 @@ class MiscService extends Service {
         return {type: 'block'}
       } else if (await Transaction.findOne({
         where: {id: Buffer.from(id, 'hex')},
-        attributes: ['_id'],
-        transaction
+        attributes: ['_id']
       })) {
         return {type: 'transaction'}
       }
@@ -35,8 +33,7 @@ class MiscService extends Service {
       if ([Address.CONTRACT, Address.EVM_CONTRACT].includes(address.type)) {
         let contract = await Contract.findOne({
           where: {address: address.data},
-          attributes: ['address', 'type'],
-          transaction
+          attributes: ['address', 'type']
         })
         if (contract) {
           return {
@@ -71,8 +68,7 @@ class MiscService extends Service {
             where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`})
           ]
         },
-        attributes: ['contractAddress'],
-        transaction
+        attributes: ['contractAddress']
       })).map(qrc20 => qrc20.contractAddress)
     }
     if (qrc20Results.length) {
@@ -83,7 +79,7 @@ class MiscService extends Service {
           ORDER BY holders DESC LIMIT 1
         ) qrc20_balance
         INNER JOIN contract ON contract.address = qrc20_balance.contract_address
-      `, {type: db.QueryTypes.SELECT, transaction})
+      `, {type: db.QueryTypes.SELECT})
       return {
         type: 'contract',
         contractType: 'qrc20',
@@ -99,8 +95,7 @@ class MiscService extends Service {
           where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), id.toLowerCase())
         ]
       },
-      attributes: ['contractAddress'],
-      transaction
+      attributes: ['contractAddress']
     })).map(qrc721 => qrc721.contractAddress)
     if (qrc721Results.length === 0) {
       qrc721Results = (await QRC721.findAll({
@@ -112,8 +107,7 @@ class MiscService extends Service {
             where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`})
           ]
         },
-        attributes: ['contractAddress'],
-        transaction
+        attributes: ['contractAddress']
       })).map(qrc721 => qrc721.contractAddress)
     }
     if (qrc721Results.length) {
@@ -124,7 +118,7 @@ class MiscService extends Service {
           ORDER BY holders DESC LIMIT 1
         ) qrc721_token
         INNER JOIN contract ON contract.address = qrc721_token.contract_address
-      `, {type: db.QueryTypes.SELECT, transaction})
+      `, {type: db.QueryTypes.SELECT})
       return {
         type: 'contract',
         contractType: 'qrc721',

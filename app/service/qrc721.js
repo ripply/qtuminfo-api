@@ -9,7 +9,7 @@ class QRC721Service extends Service {
     let [{totalCount}] = await db.query(sql`
       SELECT COUNT(DISTINCT(qrc721_token.contract_address)) AS count FROM qrc721_token
       INNER JOIN qrc721 USING (contract_address)
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     let list = await db.query(sql`
       SELECT
         contract.address_string AS address, contract.address AS addressHex,
@@ -25,7 +25,7 @@ class QRC721Service extends Service {
       INNER JOIN qrc721 USING (contract_address)
       INNER JOIN contract ON contract.address = list.contract_address
       ORDER BY holders DESC
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
 
     return {
       totalCount,
@@ -59,7 +59,7 @@ class QRC721Service extends Service {
       ) qrc721_token
       INNER JOIN contract ON contract.address = qrc721_token.contract_address
       INNER JOIN qrc721 ON qrc721.contract_address = qrc721_token.contract_address
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     return list.map(item => ({
       address: item.addressHex.toString('hex'),
       addressHex: item.addressHex,
@@ -82,8 +82,7 @@ class QRC721Service extends Service {
         ...this.ctx.service.block.getBlockFilter(),
         address: contractAddress,
         topic1: TransferABI.id
-      },
-      transactions: this.ctx.state.transaction
+      }
     })
     let transactions = await db.query(sql`
       SELECT
@@ -104,7 +103,7 @@ class QRC721Service extends Service {
       INNER JOIN transaction ON transaction._id = evm_receipt.transaction_id
       INNER JOIN header ON header.height = evm_receipt.block_height
       ORDER BY list._id ${{raw: order}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
 
     let addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()

@@ -22,8 +22,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   }
   let contractResult = await Contract.findOne({
     where: filter,
-    attributes: ['address', 'addressString', 'vm', 'type'],
-    transaction: ctx.state.transaction
+    attributes: ['address', 'addressString', 'vm', 'type']
   })
   ctx.assert(contractResult, 404)
   contract.contractAddress = contractResult.address
@@ -36,8 +35,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
       type: {[$gte]: Address.parseType('contract')},
       data: contract.contractAddress
     },
-    attributes: ['_id'],
-    transaction: ctx.state.transaction
+    attributes: ['_id']
   })
   contract.addressIds = addressList.map(address => address._id)
   ctx.state[paramName] = contract

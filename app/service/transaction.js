@@ -33,8 +33,7 @@ class TransactionService extends Service {
             attributes: ['id']
           }]
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
     if (!transaction) {
       return null
@@ -42,8 +41,7 @@ class TransactionService extends Service {
     let witnesses = await Witness.findAll({
       where: {transactionId: id},
       attributes: ['inputIndex', 'script'],
-      order: [['inputIndex', 'ASC'], ['witnessIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['inputIndex', 'ASC'], ['witnessIndex', 'ASC']]
     })
 
     let inputs = await TransactionInput.findAll({
@@ -78,8 +76,7 @@ class TransactionService extends Service {
           }]
         }
       ],
-      order: [['inputIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['inputIndex', 'ASC']]
     })
     let outputs = await TransactionOutput.findAll({
       where: {transactionId: transaction._id},
@@ -172,8 +169,7 @@ class TransactionService extends Service {
           }]
         }
       ],
-      order: [['outputIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['outputIndex', 'ASC']]
     })
 
     let eventLogs = []
@@ -202,8 +198,7 @@ class TransactionService extends Service {
             attributes: ['name', 'symbol']
           }
         ],
-        order: [['_id', 'ASC']],
-        transaction: this.ctx.state.transaction
+        order: [['_id', 'ASC']]
       })
       let contractSpendIds = (await Transaction.findAll({
         attributes: ['_id'],
@@ -214,8 +209,7 @@ class TransactionService extends Service {
           attributes: [],
           where: {destId: transaction._id}
         }],
-        order: [['blockHeight', 'ASC'], ['indexInBlock', 'ASC']],
-        transaction: this.ctx.state.transaction
+        order: [['blockHeight', 'ASC'], ['indexInBlock', 'ASC']]
       })).map(item => item._id)
       if (contractSpendIds.length) {
         let inputs = await TransactionInput.findAll({
@@ -233,8 +227,7 @@ class TransactionService extends Service {
               attributes: ['address', 'addressString']
             }]
           }],
-          order: [['inputIndex', 'ASC']],
-          transaction: this.ctx.state.transaction
+          order: [['inputIndex', 'ASC']]
         })
         let outputs = await TransactionOutput.findAll({
           where: {transactionId: {[$in]: contractSpendIds}},
@@ -251,8 +244,7 @@ class TransactionService extends Service {
               attributes: ['address', 'addressString']
             }]
           }],
-          order: [['outputIndex', 'ASC']],
-          transaction: this.ctx.state.transaction
+          order: [['outputIndex', 'ASC']]
         })
         for (let id of contractSpendIds) {
           contractSpends.push({
@@ -407,8 +399,7 @@ class TransactionService extends Service {
 
     let transaction = await Transaction.findOne({
       where: {id},
-      attributes: ['_id', 'version', 'flag', 'lockTime'],
-      transaction: this.ctx.state.transaction
+      attributes: ['_id', 'version', 'flag', 'lockTime']
     })
     if (!transaction) {
       return null
@@ -416,8 +407,7 @@ class TransactionService extends Service {
     let witnesses = await Witness.findAll({
       where: {transactionId: id},
       attributes: ['inputIndex', 'script'],
-      order: [['inputIndex', 'ASC'], ['witnessIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['inputIndex', 'ASC'], ['witnessIndex', 'ASC']]
     })
 
     let inputs = await TransactionInput.findAll({
@@ -429,14 +419,12 @@ class TransactionService extends Service {
         required: false,
         attributes: ['id'],
       }],
-      order: [['inputIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['inputIndex', 'ASC']]
     })
     let outputs = await TransactionOutput.findAll({
       where: {transactionId: transaction._id},
       attributes: ['value', 'scriptPubKey'],
-      order: [['outputIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['outputIndex', 'ASC']]
     })
 
     return new RawTransaction({
@@ -471,34 +459,31 @@ class TransactionService extends Service {
       },
       attributes: ['id'],
       order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
-      limit: count,
-      transaction: this.ctx.state.transaction
+      limit: count
     })).map(tx => tx.id)
   }
 
   async getAllTransactions() {
     const {Transaction} = this.ctx.model
     let {limit, offset} = this.ctx.state.pagination
-    let totalCount = await Transaction.count({transaction: this.ctx.state.transaction})
+    let totalCount = await Transaction.count()
     let list = await Transaction.findAll({
       attributes: ['id'],
       order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
       offset,
-      limit,
-      transaction: this.ctx.state.transaction
+      limit
     })
     return {totalCount, ids: list.map(({id}) => id)}
   }
 
   async getLatestTransactions(count = 20) {
     const {Transaction} = this.ctx.model
-    let totalCount = await Transaction.count({transaction: this.ctx.state.transaction})
+    let totalCount = await Transaction.count()
     let list = await Transaction.findAll({
       attributes: ['id'],
       order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
       offset: 0,
-      limit: count,
-      transaction: this.ctx.state.transaction
+      limit: count
     })
     return {totalCount, ids: list.map(({id}) => id)}
   }
@@ -522,8 +507,7 @@ class TransactionService extends Service {
           required: true,
           attributes: ['string']
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
     let receipts = await EVMReceipt.findAll({
       attributes: ['senderType', 'senderData'],
@@ -533,8 +517,7 @@ class TransactionService extends Service {
         required: true,
         where: {id},
         attributes: []
-      }],
-      transaction: this.ctx.state.transaction
+      }]
     })
     let addresses = new Set(balanceChanges.map(item => item.address.string))
     for (let receipt of receipts) {
@@ -679,7 +662,7 @@ class TransactionService extends Service {
                 SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
               )
             )
-          `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+          `, {type: db.QueryTypes.SELECT})
           for (let {state_mutability: stateMutability, contract_tag: tag} of abiList) {
             result.receipt.abi = {
               tag,
@@ -698,7 +681,7 @@ class TransactionService extends Service {
                 SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
               )
             )
-          `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+          `, {type: db.QueryTypes.SELECT})
           for (let {type, name, inputs, state_mutability: stateMutability, contract_tag: tag} of abiList) {
             let abi = new Solidity.MethodABI({type, name, inputs, stateMutability})
             try {
@@ -734,7 +717,7 @@ class TransactionService extends Service {
               SELECT tag FROM contract_tag WHERE contract_address = ${addressHex}
             )
           )
-        `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+        `, {type: db.QueryTypes.SELECT})
         for (let {name, inputs, anonymous, contract_tag: tag} of abiList) {
           let abi = new Solidity.EventABI({name, inputs, anonymous})
           try {
@@ -795,8 +778,7 @@ class TransactionService extends Service {
       if (output.evmReceipt) {
         let qrc20 = await QRC20.findOne({
           where: {contractAddress: output.addressHex},
-          attributes: ['name', 'symbol', 'decimals'],
-          transaction: this.ctx.state.transaction
+          attributes: ['name', 'symbol', 'decimals']
         })
         if (!qrc20) {
           continue
@@ -869,8 +851,7 @@ class TransactionService extends Service {
         as: 'header',
         required: false,
         attributes: ['hash', 'timestamp']
-      }],
-      transaction: this.ctx.state.transaction
+      }]
     })
     if (!transaction) {
       return null
@@ -878,8 +859,7 @@ class TransactionService extends Service {
 
     let inputs = await TransactionInput.findAll({
       where: {transactionId},
-      attributes: ['value', 'addressId'],
-      transaction: this.ctx.state.transaction
+      attributes: ['value', 'addressId']
     })
     let outputs = await TransactionOutput.findAll({
       where: {transactionId},
@@ -925,8 +905,7 @@ class TransactionService extends Service {
           required: false,
           attributes: ['transactionId']
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
 
     let inputValue = inputs.map(input => input.value).reduce((x, y) => x + y)
@@ -1025,8 +1004,7 @@ class TransactionService extends Service {
           required: false,
           attributes: ['addressString']
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
     if (!receipt) {
       return null
@@ -1039,8 +1017,7 @@ class TransactionService extends Service {
         required: true,
         attributes: ['addressString']
       }],
-      order: [['logIndex', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['logIndex', 'ASC']]
     })
 
     let outputAddress

@@ -23,8 +23,7 @@ class BlockService extends Service {
           as: 'miner',
           attributes: ['string']
         }]
-      }],
-      transaction: this.ctx.state.transaction
+      }]
     })
     if (!result) {
       return null
@@ -32,19 +31,16 @@ class BlockService extends Service {
     let [prevHeader, nextHeader, transactions, [reward]] = await Promise.all([
       Header.findOne({
         where: {height: result.height - 1},
-        attributes: ['timestamp'],
-        transaction: this.ctx.state.transaction
+        attributes: ['timestamp']
       }),
       Header.findOne({
         where: {height: result.height + 1},
-        attributes: ['hash'],
-        transaction: this.ctx.state.transaction
+        attributes: ['hash']
       }),
       Transaction.findAll({
         where: {blockHeight: result.height},
         attributes: ['id'],
-        order: [['indexInBlock', 'ASC']],
-        transaction: this.ctx.state.transaction
+        order: [['indexInBlock', 'ASC']]
       }),
       this.getBlockRewards(result.height)
     ])
@@ -87,15 +83,14 @@ class BlockService extends Service {
     } else {
       return null
     }
-    let block = await Header.findOne({where: filter, transaction: this.ctx.state.transaction})
+    let block = await Header.findOne({where: filter})
     if (!block) {
       return null
     }
     let transactionIds = (await Transaction.findAll({
       where: {blockHeight: block.height},
       attributes: ['id'],
-      order: [['indexInBlock', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['indexInBlock', 'ASC']]
     })).map(tx => tx.id)
     let transactions = await Promise.all(transactionIds.map(id => this.ctx.service.transaction.getRawTransaction(id)))
     return new RawBlock({
@@ -125,7 +120,7 @@ class BlockService extends Service {
     }
     let [{totalCount}] = await db.query(sql`
       SELECT COUNT(*) AS totalCount FROM header WHERE height <= ${this.app.blockchainInfo.tip.height} ${{raw: dateFilterString}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     let blocks
     if (this.ctx.state.pagination) {
       let {limit, offset} = this.ctx.state.pagination
@@ -141,7 +136,7 @@ class BlockService extends Service {
         ) l, header, block, address
         WHERE l.height = header.height AND l.height = block.height AND address._id = block.miner_id
         ORDER BY l.height ASC
-      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+      `, {type: db.QueryTypes.SELECT})
     } else {
       blocks = await db.query(sql`
         SELECT
@@ -154,7 +149,7 @@ class BlockService extends Service {
         ) l, header, block, address
         WHERE l.height = header.height AND l.height = block.height AND address._id = block.miner_id
         ORDER BY l.height ASC
-      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+      `, {type: db.QueryTypes.SELECT})
     }
     if (blocks.length === 0) {
       return {totalCount, blocks: []}
@@ -176,7 +171,7 @@ class BlockService extends Service {
         LIMIT ${count}
       ) l, header, address WHERE l.height = header.height AND l.miner_id = address._id
       ORDER BY l.height DESC
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     if (blocks.length === 0) {
       return []
     }
@@ -210,7 +205,7 @@ class BlockService extends Service {
       ) block_reward
       GROUP BY height
       ORDER BY height ASC
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     let result = rewards.map(reward => BigInt(reward.value))
     if (startHeight[0] === 0) {
       result[0] = 0n
@@ -229,14 +224,13 @@ class BlockService extends Service {
         INNER JOIN transaction ON block.height = transaction.block_height
         WHERE block.height BETWEEN ${blocks[0].height} AND ${blocks[blocks.length - 1].height}
         GROUP BY block.height
-      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction}))
+      `, {type: db.QueryTypes.SELECT}))
         .map(({height, transactionsCount}) => [height, transactionsCount])
     )
     let [prevHeader, rewards] = await Promise.all([
       Header.findOne({
         where: {height: blocks[0].height - 1},
-        attributes: ['timestamp'],
-        transaction: this.ctx.state.transaction
+        attributes: ['timestamp']
       }),
       this.getBlockRewards(blocks[0].height, blocks[blocks.length - 1].height + 1)
     ])
@@ -275,7 +269,7 @@ class BlockService extends Service {
       let [{fromBlockHeight}] = await db.query(sql`
         SELECT MIN(height) as fromBlockHeight FROM header
         WHERE timestamp > ${timestamp - 86400 * lastNDays}
-      `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+      `, {type: db.QueryTypes.SELECT})
       if (fromBlockHeight > fromBlock) {
         fromBlock = fromBlockHeight
       }
@@ -284,8 +278,7 @@ class BlockService extends Service {
     let totalCount = await Block.count({
       where: {height: {[$gte]: fromBlock}},
       distinct: true,
-      col: 'minerId',
-      transaction: this.ctx.state.transaction
+      col: 'minerId'
     })
     let list = await db.query(sql`
       SELECT
@@ -313,7 +306,7 @@ class BlockService extends Service {
       INNER JOIN address ON address._id = list.miner_id
       LEFT JOIN rich_list ON rich_list.address_id = address._id
       ORDER BY blocks DESC
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     return {
       totalCount,
       list: list.map(({address, blocks, reward, balance}) => ({address, blocks, reward, balance: BigInt(balance || 0)})),
@@ -325,8 +318,7 @@ class BlockService extends Service {
     const {Transaction} = this.ctx.model
     let transactions = await Transaction.findAll({
       where: {blockHeight: height},
-      attributes: ['id'],
-      transaction: this.ctx.state.transaction
+      attributes: ['id']
     })
     return transactions.map(tx => tx.id)
   }

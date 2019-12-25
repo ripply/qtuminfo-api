@@ -24,8 +24,7 @@ class ContractService extends Service {
       }
       let contractResult = await Contract.findOne({
         where: filter,
-        attributes: ['address', 'addressString', 'vm', 'type'],
-        transaction: this.ctx.state.transaction
+        attributes: ['address', 'addressString', 'vm', 'type']
       })
       this.ctx.assert(contractResult, 404)
       result.push(contractResult.address)
@@ -66,8 +65,7 @@ class ContractService extends Service {
             required: true
           }]
         }
-      ],
-      transaction: this.ctx.state.transaction
+      ]
     })
     let [
       {totalReceived, totalSent},
@@ -145,7 +143,7 @@ class ContractService extends Service {
             OR (contract.type = 'qrc721' AND log.topic4 IS NOT NULL)
           )
       ) list
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     return count
   }
 
@@ -188,7 +186,7 @@ class ContractService extends Service {
       ) list, transaction tx
       WHERE tx._id = list._id
       ORDER BY list.block_height ${{raw: order}}, list.index_in_block ${{raw: order}}, list._id ${{raw: order}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction}).map(({id}) => id)
+    `, {type: db.QueryTypes.SELECT}).map(({id}) => id)
     return {totalCount, transactions}
   }
 
@@ -198,8 +196,7 @@ class ContractService extends Service {
       where: {
         contractAddress,
         ...this.ctx.service.block.getBlockFilter()
-      },
-      transaction: this.ctx.state.transaction
+      }
     })
   }
 
@@ -221,8 +218,7 @@ class ContractService extends Service {
       attributes: ['_id'],
       order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order], ['outputIndex', order]],
       limit,
-      offset,
-      transaction: this.ctx.state.transaction
+      offset
     })).map(receipt => receipt._id)
     let receipts = await EVMReceipt.findAll({
       where: {_id: {[$in]: receiptIds}},
@@ -267,8 +263,7 @@ class ContractService extends Service {
           attributes: ['addressString']
         }
       ],
-      order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order], ['outputIndex', order]],
-      transaction: this.ctx.state.transaction
+      order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order], ['outputIndex', order]]
     })
     let transactions = receipts.map(receipt => ({
       transactionId: receipt.transaction.id,
@@ -323,8 +318,7 @@ class ContractService extends Service {
         ...topic2 ? {topic2} : {},
         ...topic3 ? {topic3} : {},
         ...topic4 ? {topic4} : {}
-      },
-      transaction: this.ctx.state.transaction
+      }
     })
     if (totalCount === 0) {
       return {totalCount, logs: []}
@@ -341,8 +335,7 @@ class ContractService extends Service {
       attributes: ['_id'],
       order: [['_id', 'ASC']],
       limit,
-      offset,
-      transaction: this.ctx.state.transaction
+      offset
     })).map(log => log._id)
 
     let logs = await EVMReceiptLog.findAll({
@@ -382,8 +375,7 @@ class ContractService extends Service {
           attributes: ['address', 'addressString']
         }
       ],
-      order: [['_id', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['_id', 'ASC']]
     })
 
     return {
@@ -424,7 +416,7 @@ class ContractService extends Service {
       SELECT COUNT(DISTINCT(log._id)) AS count from evm_receipt receipt, evm_receipt_log log
       WHERE receipt._id = log.receipt_id AND ${blockFilter} AND ${{raw: contractFilter}}
         AND ${{raw: topic1Filter}} AND ${{raw: topic2Filter}} AND ${{raw: topic3Filter}} AND ${{raw: topic4Filter}}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})
+    `, {type: db.QueryTypes.SELECT})
     if (totalCount === 0) {
       return {totalCount, logs: []}
     }
@@ -435,7 +427,7 @@ class ContractService extends Service {
         AND ${{raw: topic1Filter}} AND ${{raw: topic2Filter}} AND ${{raw: topic3Filter}} AND ${{raw: topic4Filter}}
       ORDER BY log._id ASC
       LIMIT ${offset}, ${limit}
-    `, {type: db.QueryTypes.SELECT, transaction: this.ctx.state.transaction})).map(log => log._id)
+    `, {type: db.QueryTypes.SELECT})).map(log => log._id)
 
     let logs = await EVMReceiptLog.findAll({
       where: {_id: {[$in]: ids}},
@@ -474,8 +466,7 @@ class ContractService extends Service {
           attributes: ['address', 'addressString']
         }
       ],
-      order: [['_id', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['_id', 'ASC']]
     })
 
     return {
@@ -508,8 +499,7 @@ class ContractService extends Service {
 
     let contracts = await Contract.findAll({
       where: {address: {[$in]: addresses.filter(address => Buffer.compare(address, Buffer.alloc(20)) !== 0)}},
-      attributes: ['address', 'addressString'],
-      transaction: this.ctx.state.transaction
+      attributes: ['address', 'addressString']
     })
     let mapping = new Map(contracts.map(({address, addressString}) => [address.toString('hex'), addressString]))
     for (let i = 0; i < result.length; ++i) {

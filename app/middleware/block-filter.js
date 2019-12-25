@@ -31,8 +31,7 @@ module.exports = () => async function pagination(ctx, next) {
     let header = await Header.findOne({
       where: {timestamp: {[$gte]: timestamp}},
       attributes: ['height'],
-      order: [['timestamp', 'ASC']],
-      transaction: ctx.state.transaction
+      order: [['timestamp', 'ASC']]
     })
     if (header && header.height > fromBlock) {
       fromBlock = header.height
@@ -45,8 +44,7 @@ module.exports = () => async function pagination(ctx, next) {
     let header = await Header.findOne({
       where: {timestamp: {[$lte]: timestamp}},
       attributes: ['height'],
-      order: [['timestamp', 'DESC']],
-      transaction: ctx.state.transaction
+      order: [['timestamp', 'DESC']]
     })
     if (header && (toBlock == null || header.height < toBlock)) {
       toBlock = header.height

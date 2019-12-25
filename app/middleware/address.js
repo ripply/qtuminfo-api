@@ -16,8 +16,7 @@ module.exports = () => async function address(ctx, next) {
   }
   let result = await Address.findAll({
     where: {string: {[$in]: addresses}},
-    attributes: ['_id', 'type', 'data'],
-    transaction: ctx.state.transaction
+    attributes: ['_id', 'type', 'data']
   })
   ctx.state.address = {
     rawAddresses,

@@ -8,8 +8,7 @@ class BulletinService extends Service {
       where: {priority: {[$gt]: 0}},
       attributes: ['_id', 'locale', 'title', 'url'],
       order: [['priority', 'DESC'], ['_id', 'DESC']],
-      limit: count,
-      transaction: this.ctx.state.transaction
+      limit: count
     })
     let result = {default: []}
     let locales = new Set(['default'])
@@ -23,8 +22,7 @@ class BulletinService extends Service {
       }
       for (let translation of await BulletinTranslation.findAll({
         where: {bulletinId: bulletin._id},
-        attributes: ['locale', 'title', 'url'],
-        transaction: this.ctx.state.transaction
+        attributes: ['locale', 'title', 'url']
       })) {
         if (!locales.has(translation.locale)) {
           locales.add(translation.locale)

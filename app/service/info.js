@@ -62,8 +62,7 @@ class InfoService extends Service {
     const {Header} = this.ctx.model
     let header = await Header.findOne({
       attributes: ['timestamp'],
-      order: [['height', 'DESC']],
-      transaction: this.ctx.state.transaction
+      order: [['height', 'DESC']]
     })
     return header.timestamp
   }
@@ -72,8 +71,7 @@ class InfoService extends Service {
     const {Header} = this.ctx.model
     let header = await Header.findOne({
       attributes: ['bits'],
-      order: [['height', 'DESC']],
-      transaction: this.ctx.state.transaction
+      order: [['height', 'DESC']]
     })
     return header.difficulty
   }
@@ -81,12 +79,11 @@ class InfoService extends Service {
   async getStakeWeight() {
     const {Header} = this.ctx.model
     const {gte: $gte} = this.app.Sequelize.Op
-    let height = await Header.aggregate('height', 'max', {transaction: this.ctx.state.transaction})
+    let height = await Header.aggregate('height', 'max')
     let list = await Header.findAll({
       where: {height: {[$gte]: height - 500}},
       attributes: ['timestamp', 'bits'],
-      order: [['height', 'ASC']],
-      transaction: this.ctx.state.transaction
+      order: [['height', 'ASC']]
     })
     let interval = list[list.length - 1].timestamp - list[0].timestamp
     let sum = list.slice(1)
@@ -122,8 +119,7 @@ class InfoService extends Service {
     const {Address} = this.ctx.model
     const {lt: $lt} = this.app.Sequelize.Op
     return await Address.count({
-      where: {type: {[$lt]: 0x80}},
-      transaction: this.ctx.state.transaction
+      where: {type: {[$lt]: 0x80}}
     })
   }
 }
