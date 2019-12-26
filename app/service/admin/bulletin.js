@@ -106,6 +106,21 @@ class BulletinService extends Service {
       await transaction.rollback()
     }
   }
+
+  async setPriority(mapping) {
+    const db = this.ctx.model
+    const {Bulletin} = db
+    let transaction = await db.transaction()
+    try {
+      for (let [id, priority] of Object.entries(mapping)) {
+        await Bulletin.update({priority}, {where: {_id: Number(id)}, transaction})
+      }
+      await transaction.commit()
+      return mapping
+    } catch (err) {
+      await transaction.rollback()
+    }
+  }
 }
 
 module.exports = BulletinService

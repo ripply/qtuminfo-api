@@ -22,7 +22,14 @@ class BulletinController extends Controller {
   async delete() {
     const {ctx} = this
     let {id} = ctx.params
-    ctx.body = await ctx.service.admin.bulletin.destroyBulletin(id)
+    await ctx.service.admin.bulletin.destroyBulletin(id)
+    ctx.body = null
+  }
+
+  async setPriority() {
+    const {ctx} = this
+    let mapping = ctx.request.body
+    ctx.body = await ctx.service.admin.bulletin.setPriority(mapping)
   }
 }
 

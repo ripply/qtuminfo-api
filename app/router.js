@@ -240,6 +240,11 @@ module.exports = app => {
     adminMiddleware,
     controller.admin.bulletin.delete
   )
+  router.post(
+    '/admin/bulletin/priority',
+    adminMiddleware,
+    controller.admin.bulletin.setPriority
+  )
 
   io.route('subscribe', io.controller.default.subscribe)
   io.route('unsubscribe', io.controller.default.unsubscribe)
