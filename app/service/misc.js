@@ -33,12 +33,11 @@ class MiscService extends Service {
       if ([Address.CONTRACT, Address.EVM_CONTRACT].includes(address.type)) {
         let contract = await Contract.findOne({
           where: {address: address.data},
-          attributes: ['address', 'type']
+          attributes: ['address']
         })
         if (contract) {
           return {
             type: 'contract',
-            contractType: contract.type,
             address: contract.address.toString('hex'),
             addressHex: contract.address.toString('hex')
           }
@@ -80,8 +79,7 @@ class MiscService extends Service {
         INNER JOIN contract ON contract.address = qrc20_balance.contract_address
       `, {type: db.QueryTypes.SELECT})
       return {
-        type: 'contract',
-        contractType: 'qrc20',
+        type: 'qrc20',
         address: addressHex.toString('hex'),
         addressHex: addressHex.toString('hex')
       }
@@ -119,8 +117,7 @@ class MiscService extends Service {
         INNER JOIN contract ON contract.address = qrc721_token.contract_address
       `, {type: db.QueryTypes.SELECT})
       return {
-        type: 'contract',
-        contractType: 'qrc721',
+        type: 'qrc721',
         address: addressHex.toString('hex'),
         addressHex: addressHex.toString('hex')
       }
