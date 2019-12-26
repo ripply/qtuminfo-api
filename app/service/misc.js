@@ -55,8 +55,7 @@ class MiscService extends Service {
           where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), id.toLowerCase())
         ]
       },
-      attributes: ['contractAddress'],
-      transaction
+      attributes: ['contractAddress']
     })).map(qrc20 => qrc20.contractAddress)
     if (qrc20Results.length === 0) {
       qrc20Results = (await QRC20.findAll({
