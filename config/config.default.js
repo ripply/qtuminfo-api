@@ -81,3 +81,8 @@ exports.nodemailer = {
 exports.enableFullnodes = false
 exports.cmcAPIKey = null
 exports.feedbackReceivers = []
+
+exports.admin = {
+  username: '',
+  password: ''
+}

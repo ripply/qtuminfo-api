@@ -1,5 +1,6 @@
 module.exports = app => {
   const {router, controller, io, middleware} = app
+  const adminMiddleware = middleware.admin()
   const addressMiddleware = middleware.address()
   const blockFilterMiddleware = middleware.blockFilter()
   const contractMiddleware = middleware.contract()
@@ -216,6 +217,29 @@ module.exports = app => {
   router.post('/feedback', controller.feedback.create)
   router.get('/captcha', controller.captcha.create)
   router.post('/qtuminfo-translation', controller.translation.create)
+
+  router.post('/admin/login', controller.admin.auth.login)
+
+  router.get(
+    '/admin/bulletin',
+    adminMiddleware,
+    controller.admin.bulletin.query
+  )
+  router.post(
+    '/admin/bulletin',
+    adminMiddleware,
+    controller.admin.bulletin.create
+  )
+  router.patch(
+    '/admin/bulletin/:id',
+    adminMiddleware,
+    controller.admin.bulletin.edit
+  )
+  router.delete(
+    '/admin/bulletin/:id',
+    adminMiddleware,
+    controller.admin.bulletin.delete
+  )
 
   io.route('subscribe', io.controller.default.subscribe)
   io.route('unsubscribe', io.controller.default.unsubscribe)
