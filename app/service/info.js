@@ -3,13 +3,13 @@ const {Service} = require('egg')
 class InfoService extends Service {
   async getInfo() {
     let height = this.app.blockchainInfo.tip.height
-    let blockTime = JSON.parse(await this.app.redis.hget(this.app.name, 'blocktime')) || 0
-    let difficulty = JSON.parse(await this.app.redis.hget(this.app.name, 'difficulty')) || 0
-    let stakeWeight = JSON.parse(await this.app.redis.hget(this.app.name, 'stakeweight')) || 0
-    let fullnodes = JSON.parse(await this.app.redis.hget(this.app.name, 'fullnodes')) || 0
-    let feeRate = JSON.parse(await this.app.redis.hget(this.app.name, 'feerate')).find(item => item.blocks === 10).feeRate || 0.004
-    let dgpInfo = JSON.parse(await this.app.redis.hget(this.app.name, 'dgpinfo')) || {}
-    let addresses = JSON.parse(await this.app.redis.hget(this.app.name, 'addresses')) || 0
+    let blockTime = await this.ctx.service.cache.getCache('blocktime') || 0
+    let difficulty = await this.ctx.service.cache.getCache('difficulty') || 0
+    let stakeWeight = await this.ctx.service.cache.getCache('stakeweight') || 0
+    let fullnodes = await this.ctx.service.cache.getCache('fullnodes') || 0
+    let feeRate = (await this.ctx.service.cache.getCache('feerate') || []).find(item => item.blocks === 10).feeRate || 0.004
+    let dgpInfo = await this.ctx.service.cache.getCache('dgpinfo') || {}
+    let addresses = await this.ctx.service.cache.getCache('addresses') || 0
     return {
       height,
       supply: this.getTotalSupply(),

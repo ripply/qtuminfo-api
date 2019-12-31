@@ -6,7 +6,7 @@ module.exports = app => ({
   },
   async task(ctx) {
     let fullNodes = await ctx.service.misc.getFullNodes()
-    await app.redis.hset(app.name, 'fullnodes', JSON.stringify(fullNodes))
+    await ctx.service.cache.setCache('fullnodes', fullNodes)
     app.io.of('/').to('blockchain')
       .emit('fullnodes', fullNodes)
   }

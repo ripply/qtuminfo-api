@@ -18,7 +18,7 @@ class InfoController extends Controller {
   }
 
   async feeRates() {
-    this.ctx.body = JSON.parse(await this.app.redis.hget(this.app.name, 'feerate')).filter(item => [2, 4, 6, 12, 24].includes(item.blocks))
+    this.ctx.body = (await this.ctx.service.cache.getCache('feerate')).filter(item => [2, 4, 6, 12, 24].includes(item.blocks))
   }
 }
 

@@ -11,7 +11,7 @@ module.exports = app => {
   app.messenger.on('update-24h-statistics', async () => {
     let ctx = app.createAnonymousContext()
     let _24hStatistics = await ctx.service.statistics.get24hStatistics()
-    await app.redis.hset(app.name, '24h-statistics', JSON.stringify(_24hStatistics))
+    await ctx.service.cache.setCache('24h-statistics', _24hStatistics)
     namespace.to('blockchain').emit('24h-statistics', _24hStatistics)
   })
 
@@ -33,39 +33,39 @@ module.exports = app => {
   app.messenger.on('update-daily-transactions', async () => {
     let ctx = app.createAnonymousContext()
     let dailyTransactions = await ctx.service.statistics.getDailyTransactions()
-    await app.redis.hset(app.name, 'daily-transactions', JSON.stringify(dailyTransactions))
+    await ctx.service.cache.setCache('daily-transactions', dailyTransactions)
   })
 
   app.messenger.on('update-block-interval', async () => {
     let ctx = app.createAnonymousContext()
     let blockInterval = await ctx.service.statistics.getBlockIntervalStatistics()
-    await app.redis.hset(app.name, 'block-interval', JSON.stringify(blockInterval))
+    await ctx.service.cache.setCache('block-interval', blockInterval)
   })
 
   app.messenger.on('update-address-growth', async () => {
     let ctx = app.createAnonymousContext()
     let addressGrowth = await ctx.service.statistics.getAddressGrowth()
-    await app.redis.hset(app.name, 'address-growth', JSON.stringify(addressGrowth))
+    await ctx.service.cache.setCache('address-growth', addressGrowth)
   })
 
   app.messenger.on('update-blocktime', async () => {
     let ctx = app.createAnonymousContext()
     let timestamp = await ctx.service.info.getBlockTime()
-    await app.redis.hset(app.name, 'blocktime', JSON.stringify(timestamp))
+    await ctx.service.cache.setCache('blocktime', timestamp)
     namespace.to('blockchain').emit('blocktime', timestamp)
   })
 
   app.messenger.on('update-difficulty', async () => {
     let ctx = app.createAnonymousContext()
     let difficulty = await ctx.service.info.getDifficulty()
-    await app.redis.hset(app.name, 'difficulty', JSON.stringify(difficulty))
+    await ctx.service.cache.setCache('difficulty', difficulty)
     namespace.to('blockchain').emit('difficulty', difficulty)
   })
 
   app.messenger.on('update-stakeweight', async () => {
     let ctx = app.createAnonymousContext()
     let stakeWeight = await ctx.service.info.getStakeWeight()
-    await app.redis.hset(app.name, 'stakeweight', JSON.stringify(stakeWeight))
+    await ctx.service.cache.setCache('stakeweight', stakeWeight)
     namespace.to('blockchain').emit('stakeweight', stakeWeight)
   })
 
@@ -80,14 +80,14 @@ module.exports = app => {
   app.messenger.on('update-dgpinfo', async () => {
     let ctx = app.createAnonymousContext()
     let dgpInfo = await ctx.service.info.getDGPInfo()
-    await app.redis.hset(app.name, 'dgpinfo', JSON.stringify(dgpInfo))
+    await ctx.service.cache.setCache('dgpinfo', dgpInfo)
     namespace.to('blockchain').emit('dgpinfo', dgpInfo)
   })
 
   app.messenger.on('update-addresses', async () => {
     let ctx = app.createAnonymousContext()
     let addresses = await ctx.service.info.getAddresses()
-    await app.redis.hset(app.name, 'addresses', JSON.stringify(addresses))
+    await ctx.service.cache.setCache('addresses', addresses)
     namespace.to('blockchain').emit('addresses', addresses)
   })
 
