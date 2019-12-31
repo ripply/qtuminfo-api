@@ -464,9 +464,9 @@ class TransactionService extends Service {
   }
 
   async getAllTransactions() {
-    const {Transaction} = this.ctx.model
+    const {Block, Transaction} = this.ctx.model
     let {limit, offset} = this.ctx.state.pagination
-    let totalCount = await Transaction.count()
+    let totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
     let list = await Transaction.findAll({
       attributes: ['id'],
       order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
@@ -477,8 +477,8 @@ class TransactionService extends Service {
   }
 
   async getLatestTransactions(count = 20) {
-    const {Transaction} = this.ctx.model
-    let totalCount = await Transaction.count()
+    const {Block, Transaction} = this.ctx.model
+    let totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
     let list = await Transaction.findAll({
       attributes: ['id'],
       order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],

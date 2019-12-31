@@ -26,6 +26,7 @@ CREATE TABLE `block` (
   `size` int(10) unsigned NOT NULL,
   `weight` int(10) unsigned NOT NULL,
   `miner_id` bigint(20) unsigned NOT NULL,
+  `txs` int(10) unsigned NOT NULL,
   `transactions_count` int(10) unsigned NOT NULL,
   `contract_transactions_count` int(10) unsigned NOT NULL,
   `transaction_volume` bigint(20) NOT NULL,
