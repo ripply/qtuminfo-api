@@ -1,3 +1,4 @@
+const LRU = require('redis-lru')
 const {Service} = require('egg')
 
 class CacheService extends Service {
@@ -20,6 +21,10 @@ class CacheService extends Service {
 
   async existsCache(key) {
     return await this.app.redis.hexists(this.app.name, key)
+  }
+
+  getLRUCache(options) {
+    return LRU(this.app.config.redisClient, options)
   }
 }
 

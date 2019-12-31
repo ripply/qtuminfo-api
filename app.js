@@ -144,9 +144,22 @@ module.exports = app => {
     ])
   })
 
-  app.messenger.on('socket/reorg/block-tip', tip => {
-    app.blockchainInfo.tip = tip
-    namespace.emit('reorg', tip)
+  app.messenger.on('socket/reorg/block-tip', async tip => {
+    let ctx = app.createAnonymousContext()
+    let cache = ctx.service.cache.getLRUCache({namespace: 'block', max: 100})
+    let originalHeight = app.blockchainInfo.tip.height
+    try {
+      for (let height = tip.height + 1; height <= originalHeight; ++height) {
+        let {hash} = await cache.get(height)
+        await Promise.all([
+          () => cache.del(height),
+          () => cache.del(hash)
+        ])
+      }
+    } finally {
+      app.blockchainInfo.tip = tip
+      namespace.emit('reorg', tip)
+    }
   })
 
   app.messenger.on('socket/mempool-transaction', async id => {

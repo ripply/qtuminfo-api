@@ -8,6 +8,8 @@ const redisConfig = {
   db: 0
 }
 
+const redisClient = new Redis(redisConfig)
+
 exports.keys = 'qtuminfo-api'
 
 exports.security = {
@@ -20,8 +22,10 @@ exports.redis = {
   client: redisConfig
 }
 
+exports.redisClient = redisClient
+
 exports.ratelimit = {
-  db: new Redis(redisConfig),
+  db: redisClient,
   headers: {
     remaining: 'Rate-Limit-Remaining',
     reset: 'Rate-Limit-Reset',

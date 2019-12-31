@@ -19,6 +19,7 @@
     "koa-ratelimit": "^4.2.0",
     "mysql2": "^1.7.0",
     "nodemailer": "^6.3.1",
+    "redis-lru": "^0.6.0",
     "socket.io-client": "^2.3.0",
     "svg-captcha": "^1.4.0"
   },

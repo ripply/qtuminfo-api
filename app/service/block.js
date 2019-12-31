@@ -3,6 +3,23 @@ const {Service} = require('egg')
 class BlockService extends Service {
   async getBlock(arg) {
     const {Header, Address, Block, Transaction} = this.ctx.model
+
+    let cache = this.ctx.service.cache.getLRUCache({namespace: 'block', max: 100})
+    let cachedBlock = await cache.get(arg)
+    if (cachedBlock) {
+      let nextHeader = await Header.findOne({
+        where: {height: cachedBlock.height + 1},
+        attributes: ['hash']
+      })
+      cachedBlock.nextHash = nextHeader && nextHeader.hash
+      cachedBlock.confirmations = this.app.blockchainInfo.tip.height - cachedBlock.height + 1
+      await Promise.all([
+        () => cache.set(cachedBlock.height, cachedBlock),
+        () => cache.set(cachedBlock.hash, cachedBlock)
+      ])
+      return cachedBlock
+    }
+
     let filter
     if (Number.isInteger(arg)) {
       filter = {height: arg}
@@ -44,7 +61,7 @@ class BlockService extends Service {
       }),
       this.getBlockRewards(result.height)
     ])
-    return {
+    let block = {
       hash: result.hash,
       height: result.height,
       version: result.version,
@@ -70,6 +87,11 @@ class BlockService extends Service {
       reward,
       confirmations: this.app.blockchainInfo.tip.height - result.height + 1
     }
+    await Promise.all([
+      () => cache.set(block.height, block),
+      () => cache.set(block.hash, block)
+    ])
+    return block
   }
 
   async getRawBlock(arg) {
