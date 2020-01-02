@@ -68,5 +68,6 @@ module.exports = function(agent) {
     agent.messenger.sendRandom('update-dgpinfo')
     agent.messenger.sendRandom('update-addresses')
     agent.messenger.sendRandom('update-24h-statistics')
+    agent.messenger.sendRandom('update-qrc20-transfers')
   })
 }

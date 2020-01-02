@@ -234,6 +234,14 @@ CREATE TABLE `qrc20_statistics` (
   KEY `transactions` (`transactions` DESC) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `qrc20_transfer` (
+  `log_id` bigint(20) unsigned NOT NULL,
+  `from` binary(20) NOT NULL,
+  `to` binary(20) NOT NULL,
+  `value` binary(32) NOT NULL,
+  PRIMARY KEY (`log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+
 CREATE TABLE `qrc721` (
   `contract_address` binary(20) NOT NULL,
   `name` blob NOT NULL,

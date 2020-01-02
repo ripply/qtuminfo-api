@@ -25,6 +25,11 @@ module.exports = app => {
     await ctx.service.qrc20.updateQRC20Statistics()
   })
 
+  app.messenger.on('update-qrc20-transfers', async () => {
+    let ctx = app.createAnonymousContext()
+    await ctx.service.qrc20.updateQRC20Transfers()
+  })
+
   app.messenger.on('update-qrc721-statistics', async () => {
     let ctx = app.createAnonymousContext()
     await ctx.service.qrc721.updateQRC721Statistics()
@@ -134,7 +139,8 @@ module.exports = app => {
           id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
         ))
         namespace.to('transaction').emit('latest-transactions', {totalCount, transactions})
-      })()
+      })(),
+      ctx.service.qrc20.updateQRC20Transfers()
     ])
   })
 

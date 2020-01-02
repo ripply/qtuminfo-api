@@ -465,17 +465,13 @@ class QRC20Service extends Service {
   }
 
   async getAllQRC20TokenTransactions() {
-    const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
     const db = this.ctx.model
+    const {Qrc20Transfer: QRC20Transfer} = db
     const {sql} = this.ctx.helper
     let {limit, offset, reversed = true} = this.ctx.state.pagination
     let order = reversed ? 'DESC' : 'ASC'
 
-    let [{totalCount}] = await db.query(sql`
-      SELECT COUNT(*) AS totalCount
-      FROM qrc20, evm_receipt_log log
-      WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
-    `, {type: db.QueryTypes.SELECT})
+    let totalCount = await QRC20Transfer.count()
     let transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
@@ -491,17 +487,16 @@ class QRC20Service extends Service {
         evm_receipt_log.topic3 AS topic3,
         evm_receipt_log.data AS data
       FROM (
-        SELECT log._id AS _id FROM qrc20, evm_receipt_log log
-        WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
-        ORDER BY log._id ${{raw: order}} LIMIT ${offset}, ${limit}
+        SELECT log_id FROM qrc20_transfer
+        ORDER BY log_id ${{raw: order}} LIMIT ${offset}, ${limit}
       ) list
-      INNER JOIN evm_receipt_log ON evm_receipt_log._id = list._id
+      INNER JOIN evm_receipt_log ON evm_receipt_log._id = list.log_id
       INNER JOIN evm_receipt ON evm_receipt._id = evm_receipt_log.receipt_id
       INNER JOIN qrc20 ON qrc20.contract_address = evm_receipt_log.address
       INNER JOIN contract ON contract.address = evm_receipt_log.address
       INNER JOIN transaction ON transaction._id = evm_receipt.transaction_id
       INNER JOIN header ON header.height = evm_receipt.block_height
-      ORDER BY list._id ${{raw: order}}
+      ORDER BY list.log_id ${{raw: order}}
     `, {type: db.QueryTypes.SELECT})
 
     let addresses = await this.ctx.service.contract.transformHexAddresses(
@@ -681,6 +676,25 @@ class QRC20Service extends Service {
     } catch (err) {
       await transaction.rollback()
     }
+  }
+
+  async updateQRC20Transfers() {
+    const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
+    const db = this.ctx.model
+    const {Qrc20Transfer: QRC20Transfer} = db
+    const {sql} = this.ctx.helper
+
+    let logs = await db.query(sql`
+      SELECT log._id AS _id, log.topic2 AS topic2, log.topic3 AS topic3, log.data AS data FROM qrc20, evm_receipt_log log
+      WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
+        AND log._id > (SELECT MAX(log_id) FROM qrc20_transfer)
+    `, {type: db.QueryTypes.SELECT})
+    await QRC20Transfer.bulkCreate(logs.map(log => ({
+      logId: log._id,
+      from: log.topic2.slice(12),
+      to: log.topic3.slice(12),
+      value: log.data
+    })), {validate: false})
   }
 }
 
