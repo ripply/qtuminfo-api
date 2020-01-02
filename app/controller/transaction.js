@@ -7,7 +7,7 @@ class TransactionController extends Controller {
     let id = Buffer.from(ctx.params.id, 'hex')
     let transaction = await ctx.service.transaction.getTransaction(id)
     ctx.assert(transaction, 404)
-    ctx.body = await ctx.service.transaction.transformTransaction(transaction)
+    ctx.body = transaction
   }
 
   async transactions() {
@@ -19,9 +19,7 @@ class TransactionController extends Controller {
       id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
     ))
     ctx.assert(transactions.every(Boolean), 404)
-    ctx.body = await Promise.all(transactions.map(
-      tx => ctx.service.transaction.transformTransaction(tx)
-    ))
+    ctx.body = transactions
   }
 
   async rawTransaction() {
@@ -37,11 +35,8 @@ class TransactionController extends Controller {
     const {ctx} = this
     let count = Number.parseInt(ctx.query.count || 10)
     let ids = await ctx.service.transaction.getRecentTransactions(count)
-    let transactions = await Promise.all(ids.map(
+    ctx.body = await Promise.all(ids.map(
       id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
-    ))
-    ctx.body = await Promise.all(transactions.map(
-      tx => ctx.service.transaction.transformTransaction(tx)
     ))
   }
 
@@ -49,10 +44,7 @@ class TransactionController extends Controller {
     const {ctx} = this
     let {totalCount, ids} = await ctx.service.transaction.getAllTransactions()
     let transactions = await Promise.all(ids.map(id => ctx.service.transaction.getTransaction(id)))
-    ctx.body = {
-      totalCount,
-      transactions: await Promise.all(transactions.map(tx => ctx.service.transaction.transformTransaction(tx)))
-    }
+    ctx.body = {totalCount, transactions}
   }
 
   async send() {

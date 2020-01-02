@@ -279,7 +279,7 @@ class TransactionService extends Service {
       }
     }
 
-    return {
+    return await this.transformTransaction({
       id: transaction.id,
       hash: transaction.hash,
       version: transaction.version,
@@ -390,7 +390,7 @@ class TransactionService extends Service {
       contractSpends,
       size: transaction.size,
       weight: transaction.weight
-    }
+    })
   }
 
   async getRawTransaction(id) {
