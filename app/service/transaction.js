@@ -12,6 +12,7 @@ class TransactionService extends Service {
     const {in: $in} = this.app.Sequelize.Op
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
+    let cache = this.ctx.service.cache.getLRUCache({namespace: 'transaction', max: 1000})
     let transaction = await Transaction.findOne({
       where: {id},
       include: [
@@ -36,8 +37,20 @@ class TransactionService extends Service {
       ]
     })
     if (!transaction) {
+      await cache.del(id.toString('hex'))
       return null
     }
+    let cachedTransaction = await cache.get(id.toString('hex'))
+    if (cachedTransaction) {
+      if (transaction.header) {
+        cachedTransaction.blockHash = transaction.header.hash.toString('hex')
+        cachedTransaction.blockHeight = transaction.blockHeight
+        cachedTransaction.timestamp = transaction.header.timestamp
+        cachedTransaction.confirmations = this.app.blockchainInfo.tip.height - cachedTransaction.blockHeight + 1
+      }
+      return cachedTransaction
+    }
+
     let witnesses = await Witness.findAll({
       where: {transactionId: id},
       attributes: ['inputIndex', 'script'],
@@ -279,7 +292,7 @@ class TransactionService extends Service {
       }
     }
 
-    return await this.transformTransaction({
+    let result = await this.transformTransaction({
       id: transaction.id,
       hash: transaction.hash,
       version: transaction.version,
@@ -391,6 +404,8 @@ class TransactionService extends Service {
       size: transaction.size,
       weight: transaction.weight
     })
+    await cache.set(id.toString('hex'), result)
+    return result
   }
 
   async getRawTransaction(id) {
@@ -559,13 +574,13 @@ class TransactionService extends Service {
       version: transaction.version,
       lockTime: transaction.lockTime,
       blockHash: transaction.block && transaction.block.hash.toString('hex'),
+      blockHeight: transaction.block && transaction.block.height,
+      timestamp: transaction.block && transaction.block.timestamp,
+      confirmations,
       inputs,
       outputs,
       isCoinbase: isCoinbase(transaction.inputs[0]),
       isCoinstake: isCoinstake(transaction),
-      blockHeight: transaction.block && transaction.block.height,
-      confirmations,
-      timestamp: transaction.block && transaction.block.timestamp,
       inputValue: inputValue.toString(),
       outputValue: outputValue.toString(),
       refundValue: refundValue.toString(),

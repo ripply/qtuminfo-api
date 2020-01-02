@@ -13,10 +13,6 @@ class BlockService extends Service {
       })
       cachedBlock.nextHash = nextHeader && nextHeader.hash
       cachedBlock.confirmations = this.app.blockchainInfo.tip.height - cachedBlock.height + 1
-      await Promise.all([
-        () => cache.set(cachedBlock.height, cachedBlock),
-        () => cache.set(cachedBlock.hash, cachedBlock)
-      ])
       return cachedBlock
     }
 

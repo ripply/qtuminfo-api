@@ -108,6 +108,18 @@ module.exports = app => {
     app.blockchainInfo.tip = tip
     namespace.emit('tip', tip)
     let ctx = app.createAnonymousContext()
+    let transactionCache = this.ctx.service.cache.getLRUCache({namespace: 'transaction', max: 1000})
+    let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
+    for (let id of transactions) {
+      await transactionCache.del(id.toString('hex'))
+      namespace.to(`transaction/${id}`).emit('transaction/confirm', id)
+    }
+    let list = await ctx.service.block.getBlockAddressTransactions(tip.height)
+    for (let i = 0; i < transactions.length; ++i) {
+      for (let address of list[i] || []) {
+        namespace.to(`address/${address}`).emit('address/transaction', {address, id: transactions[i]})
+      }
+    }
     await Promise.all([
       (async () => {
         let ids = await ctx.service.transaction.getRecentTransactions()
@@ -122,32 +134,20 @@ module.exports = app => {
           id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))
         ))
         namespace.to('transaction').emit('latest-transactions', {totalCount, transactions})
-      })(),
-      (async () => {
-        let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
-        for (let id of transactions) {
-          namespace.to(`transaction/${id}`).emit('transaction/confirm', id)
-        }
-        let list = await ctx.service.block.getBlockAddressTransactions(tip.height)
-        for (let i = 0; i < transactions.length; ++i) {
-          for (let address of list[i] || []) {
-            namespace.to(`address/${address}`).emit('address/transaction', {address, id: transactions[i]})
-          }
-        }
       })()
     ])
   })
 
   app.messenger.on('socket/reorg/block-tip', async tip => {
     let ctx = app.createAnonymousContext()
-    let cache = ctx.service.cache.getLRUCache({namespace: 'block', max: 100})
+    let blockCache = ctx.service.cache.getLRUCache({namespace: 'block', max: 100})
     let originalHeight = app.blockchainInfo.tip.height
     try {
       for (let height = tip.height + 1; height <= originalHeight; ++height) {
-        let {hash} = await cache.get(height)
+        let {hash} = await blockCache.get(height)
         await Promise.all([
-          () => cache.del(height),
-          () => cache.del(hash)
+          () => blockCache.del(height),
+          () => blockCache.del(hash)
         ])
       }
     } finally {
