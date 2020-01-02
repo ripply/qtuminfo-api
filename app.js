@@ -108,10 +108,10 @@ module.exports = app => {
     app.blockchainInfo.tip = tip
     namespace.emit('tip', tip)
     let ctx = app.createAnonymousContext()
-    let transactionCache = this.ctx.service.cache.getLRUCache({namespace: 'transaction', max: 1000})
+    let transactionCache = ctx.service.cache.getLRUCache({namespace: 'transaction', max: 1000})
     let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
     for (let id of transactions) {
-      await transactionCache.del(id.toString('hex'))
+      await transactionCache.del(id)
       namespace.to(`transaction/${id}`).emit('transaction/confirm', id)
     }
     let list = await ctx.service.block.getBlockAddressTransactions(tip.height)
