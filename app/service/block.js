@@ -4,7 +4,7 @@ class BlockService extends Service {
   async getBlock(arg) {
     const {Header, Address, Block, Transaction} = this.ctx.model
 
-    let cache = this.ctx.service.cache.getLRUCache({namespace: 'block', max: 100})
+    let cache = this.ctx.service.getLRUCache('block')
     let cachedBlock = await cache.get(arg)
     if (cachedBlock) {
       let nextHeader = await Header.findOne({

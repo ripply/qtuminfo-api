@@ -113,7 +113,7 @@ module.exports = app => {
     app.blockchainInfo.tip = tip
     namespace.emit('tip', tip)
     let ctx = app.createAnonymousContext()
-    let transactionCache = ctx.service.cache.getLRUCache({namespace: 'transaction', max: 1000})
+    let transactionCache = ctx.service.cache.getLRUCache('transaction')
     let transactions = (await ctx.service.block.getBlockTransactions(tip.height)).map(id => id.toString('hex'))
     for (let id of transactions) {
       await transactionCache.del(id)
@@ -146,7 +146,7 @@ module.exports = app => {
 
   app.messenger.on('socket/reorg/block-tip', async tip => {
     let ctx = app.createAnonymousContext()
-    let blockCache = ctx.service.cache.getLRUCache({namespace: 'block', max: 100})
+    let blockCache = ctx.service.cache.getLRUCache('block')
     let originalHeight = app.blockchainInfo.tip.height
     try {
       for (let height = tip.height + 1; height <= originalHeight; ++height) {

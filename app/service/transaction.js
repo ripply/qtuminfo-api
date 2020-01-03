@@ -12,7 +12,7 @@ class TransactionService extends Service {
     const {in: $in} = this.app.Sequelize.Op
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
-    let cache = this.ctx.service.cache.getLRUCache({namespace: 'transaction', max: 1000})
+    let cache = this.ctx.service.cache.getLRUCache('transaction')
     let transaction = await Transaction.findOne({
       where: {id},
       include: [
