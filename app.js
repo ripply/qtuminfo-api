@@ -140,7 +140,7 @@ module.exports = app => {
         ))
         namespace.to('transaction').emit('latest-transactions', {totalCount, transactions})
       })(),
-      ctx.service.qrc20.updateEVMLogTags()
+      ctx.service.contract.updateEVMLogTags()
     ])
   })
 

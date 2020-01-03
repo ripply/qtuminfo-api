@@ -8,14 +8,12 @@ module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx
   let fromBlock = ignoreGenesis ? 1 : null
   let toBlock = null
   let object = {GET: ctx.query, POST: ctx.request.body}[ctx.method]
-  ctx.state.hasBlockFilter = false
   if ('fromBlock' in object) {
     let height = Number.parseInt(object.fromBlock)
     ctx.assert(height >= 0 && height <= 0xffffffff, 400)
     if (height > fromBlock) {
       fromBlock = height
     }
-    ctx.state.hasBlockFilter = true
   }
   if ('toBlock' in object) {
     let height = Number.parseInt(object.toBlock)
@@ -23,7 +21,6 @@ module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx
     if (toBlock == null || height < toBlock) {
       toBlock = height
     }
-    ctx.state.hasBlockFilter = true
   }
   if ('fromTime' in object) {
     let timestamp = Math.floor(Date.parse(object.fromTime) / 1000)
@@ -36,7 +33,6 @@ module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx
     if (header && header.height > fromBlock) {
       fromBlock = header.height
     }
-    ctx.state.hasBlockFilter = true
   }
   if ('toTime' in object) {
     let timestamp = Math.floor(Date.parse(object.toTime) / 1000)
@@ -49,7 +45,6 @@ module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx
     if (header && (toBlock == null || header.height < toBlock)) {
       toBlock = header.height
     }
-    ctx.state.hasBlockFilter = true
   }
   ctx.state.fromBlock = fromBlock
   ctx.state.toBlock = toBlock

@@ -171,14 +171,14 @@ module.exports = app => {
     controller.qrc20.list
   )
   router.get(
-    '/qrc20/:token',
-    middleware.contract('token'),
-    controller.qrc20.summary
-  )
-  router.get(
     '/qrc20/txs',
     paginationMiddleware,
     controller.qrc20.allTransactions
+  )
+  router.get(
+    '/qrc20/:token',
+    middleware.contract('token'),
+    controller.qrc20.summary
   )
   router.get(
     '/qrc20/:token/txs',

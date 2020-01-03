@@ -4,7 +4,7 @@ class QRC721Controller extends Controller {
   async summary() {
     const {ctx} = this
     ctx.assert(ctx.state.token.type === 'qrc721', 404)
-    let summary = await ctx.service.contract.getContractSummary(ctx.state.token.contractAddress)
+    let summary = await ctx.service.contract.getQRC721Summary(ctx.state.token.contractAddress)
     ctx.body = {
       address: summary.addressHex.toString('hex'),
       addressHex: summary.addressHex.toString('hex'),
