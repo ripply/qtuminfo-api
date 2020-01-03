@@ -156,6 +156,13 @@ CREATE TABLE `evm_receipt_log` (
   KEY `topic4` (`topic4`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
+CREATE TABLE `evm_receipt_log_tag` (
+  `tag` varchar(20) NOT NULL,
+  `log_id` bigint(20) unsigned NOT NULL,
+  PRIMARY KEY (`tag`, `log_id`),
+  KEY `log_id` (`log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+
 CREATE TABLE `evm_receipt_mapping` (
   `transaction_id` bigint(20) unsigned NOT NULL,
   `output_index` int(10) unsigned NOT NULL,
@@ -233,14 +240,6 @@ CREATE TABLE `qrc20_statistics` (
   KEY `holders` (`holders` DESC) USING BTREE,
   KEY `transactions` (`transactions` DESC) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `qrc20_transfer` (
-  `log_id` bigint(20) unsigned NOT NULL,
-  `from` binary(20) NOT NULL,
-  `to` binary(20) NOT NULL,
-  `value` binary(32) NOT NULL,
-  PRIMARY KEY (`log_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE `qrc721` (
   `contract_address` binary(20) NOT NULL,

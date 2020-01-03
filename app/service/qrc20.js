@@ -466,12 +466,12 @@ class QRC20Service extends Service {
 
   async getAllQRC20TokenTransactions() {
     const db = this.ctx.model
-    const {Qrc20Transfer: QRC20Transfer} = db
+    const {EvmReceiptLogTag: EVMReceiptLogTag} = db
     const {sql} = this.ctx.helper
     let {limit, offset, reversed = true} = this.ctx.state.pagination
     let order = reversed ? 'DESC' : 'ASC'
 
-    let totalCount = await QRC20Transfer.count()
+    let totalCount = await EVMReceiptLogTag.count({where: {tag: 'qrc20_transfer'}})
     let transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
@@ -487,7 +487,7 @@ class QRC20Service extends Service {
         evm_receipt_log.topic3 AS topic3,
         evm_receipt_log.data AS data
       FROM (
-        SELECT log_id FROM qrc20_transfer
+        SELECT log_id FROM evm_receipt_log_tag WHERE tag = 'qrc20_transfer'
         ORDER BY log_id ${{raw: order}} LIMIT ${offset}, ${limit}
       ) list
       INNER JOIN evm_receipt_log ON evm_receipt_log._id = list.log_id
@@ -676,25 +676,6 @@ class QRC20Service extends Service {
     } catch (err) {
       await transaction.rollback()
     }
-  }
-
-  async updateQRC20Transfers() {
-    const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
-    const db = this.ctx.model
-    const {Qrc20Transfer: QRC20Transfer} = db
-    const {sql} = this.ctx.helper
-
-    let logs = await db.query(sql`
-      SELECT log._id AS _id, log.topic2 AS topic2, log.topic3 AS topic3, log.data AS data FROM qrc20, evm_receipt_log log
-      WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
-        AND log._id > (SELECT MAX(log_id) FROM qrc20_transfer)
-    `, {type: db.QueryTypes.SELECT})
-    await QRC20Transfer.bulkCreate(logs.map(log => ({
-      logId: log._id,
-      from: log.topic2.slice(12),
-      to: log.topic3.slice(12),
-      value: log.data
-    })), {validate: false})
   }
 }
 

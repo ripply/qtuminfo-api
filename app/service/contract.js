@@ -488,6 +488,20 @@ class ContractService extends Service {
     }
   }
 
+  async updateEVMLogTags() {
+    const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
+    const db = this.ctx.model
+    const {EvmReceiptLogTag: EVMReceiptLogTag} = db
+    const {sql} = this.ctx.helper
+
+    let logs = await db.query(sql`
+      SELECT log._id AS _id, log.topic2 AS topic2, log.topic3 AS topic3, log.data AS data FROM qrc20, evm_receipt_log log
+      WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
+        AND log._id > (SELECT MAX(log_id) FROM evm_receipt_log_tag)
+    `, {type: db.QueryTypes.SELECT})
+    await EVMReceiptLogTag.bulkCreate(logs.map(log => ({tag: 'qrc20_transfer', logId: log._id})), {validate: false})
+  }
+
   async transformHexAddresses(addresses) {
     if (addresses.length === 0) {
       return []
