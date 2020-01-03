@@ -3,6 +3,7 @@ module.exports = app => {
   const adminMiddleware = middleware.admin()
   const addressMiddleware = middleware.address()
   const blockFilterMiddleware = middleware.blockFilter()
+  const ignoreGenesisBlockFilterMiddleware = middleware.blockFilter({ignoreGenesis: true})
   const contractMiddleware = middleware.contract()
   const paginationMiddleware = middleware.pagination()
 
@@ -75,12 +76,12 @@ module.exports = app => {
   )
   router.get(
     '/address/:address/txs',
-    addressMiddleware, paginationMiddleware, blockFilterMiddleware,
+    addressMiddleware, paginationMiddleware, ignoreGenesisBlockFilterMiddleware,
     controller.address.transactions
   )
   router.get(
     '/address/:address/basic-txs',
-    addressMiddleware, paginationMiddleware, blockFilterMiddleware,
+    addressMiddleware, paginationMiddleware, ignoreGenesisBlockFilterMiddleware,
     controller.address.basicTransactions
   )
   router.get(

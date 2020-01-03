@@ -1,11 +1,11 @@
-module.exports = () => async function pagination(ctx, next) {
+module.exports = ({ignoreGenesis}) => async function pagination(ctx, next) {
   const {Header} = ctx.model
   const {gte: $gte, lte: $lte} = ctx.app.Sequelize.Op
 
   if (!['GET', 'POST'].includes(ctx.method)) {
     return await next()
   }
-  let fromBlock = 1
+  let fromBlock = ignoreGenesis ? 1 : null
   let toBlock = null
   let object = {GET: ctx.query, POST: ctx.request.body}[ctx.method]
   ctx.state.hasBlockFilter = false
