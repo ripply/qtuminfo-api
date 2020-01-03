@@ -78,7 +78,7 @@ class ContractService extends Service {
       balanceService.getUnconfirmedBalance(addressIds),
       qrc20Service.getAllQRC20Balances([contractAddress]),
       qrc721Service.getAllQRC721Balances([contractAddress]),
-      this.getContractTransactionCount(contractAddress, addressIds)
+      this.getContractBasicTransactionCount(contractAddress)
     ])
     return {
       address: contractAddress.toString('hex'),
