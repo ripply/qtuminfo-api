@@ -479,15 +479,20 @@ class TransactionService extends Service {
   }
 
   async getAllTransactions() {
+    const db = this.ctx.model
     const {Block, Transaction} = this.ctx.model
+    const {sql} = this.ctx.helper
     let {limit, offset} = this.ctx.state.pagination
     let totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
-    let list = await Transaction.findAll({
-      attributes: ['id'],
-      order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
-      offset,
-      limit
-    })
+    let list = await db.query(sql`
+      SELECT tx.id AS id FROM (
+        SELECT _id, block_height, index_in_block FROM transaction
+        ORDER BY block_height DESC, index_in_block DESC, _id DESC
+        LIMIT ${offset}, ${limit}
+      ) list
+      INNER JOIN transaction tx USING (_id)
+      ORDER BY list.block_height DESC, list.index_in_block DESC, list._id DESC
+    `, {type: db.QueryTypes.SELECT})
     return {totalCount, ids: list.map(({id}) => id)}
   }
 

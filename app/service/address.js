@@ -90,7 +90,7 @@ class AddressService extends Service {
     let totalCount = await this.getAddressTransactionCount(addressIds, rawAddresses)
     let transactions = (await db.query(sql`
       SELECT tx.id AS id FROM (
-        SELECT _id FROM (
+        SELECT block_height, index_in_block, _id FROM (
           SELECT block_height, index_in_block, transaction_id AS _id FROM balance_change
           WHERE address_id IN ${addressIds} AND ${this.ctx.service.block.getRawBlockFilter()}
           UNION
@@ -115,6 +115,7 @@ class AddressService extends Service {
         LIMIT ${offset}, ${limit}
       ) list, transaction tx
       WHERE tx._id = list._id
+      ORDER BY list.block_height ${{raw: order}}, list.index_in_block ${{raw: order}}, list._id ${{raw: order}}
     `, {type: db.QueryTypes.SELECT})).map(({id}) => id)
     return {totalCount, transactions}
   }
