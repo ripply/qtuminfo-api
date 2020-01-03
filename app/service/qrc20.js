@@ -1,6 +1,30 @@
 const {Service} = require('egg')
 
 class QRC20Service extends Service {
+  async getQRC20Summary(contractAddress) {
+    const {Qrc20: QRC20, Qrc20Statistics: QRC20Statistics} = this.ctx.model
+    let qrc20 = await QRC20.findOne({
+      where: {contractAddress},
+      attributes: ['name', 'symbol', 'decimals', 'totalSupply', 'version'],
+      include: [{
+        model: QRC20Statistics,
+        as: 'statistics',
+        required: true
+      }]
+    })
+    return {
+      address: contractAddress.toString('hex'),
+      addressHex: contractAddress,
+      name: qrc20.name,
+      symbol: qrc20.symbol,
+      decimals: qrc20.decimals,
+      totalSupply: qrc20.totalSupply,
+      version: qrc20.version,
+      holders: qrc20.statistics.holders,
+      transactions: qrc20.statistics.transactions
+    }
+  }
+
   async listQRC20Tokens() {
     const db = this.ctx.model
     const {Qrc20Statistics: QRC20Statistics} = db

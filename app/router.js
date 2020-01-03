@@ -171,6 +171,11 @@ module.exports = app => {
     controller.qrc20.list
   )
   router.get(
+    '/qrc20/:token',
+    middleware.contract('token'),
+    controller.qrc20.summary
+  )
+  router.get(
     '/qrc20/txs',
     paginationMiddleware,
     controller.qrc20.allTransactions
@@ -189,6 +194,11 @@ module.exports = app => {
     '/qrc721',
     paginationMiddleware,
     controller.qrc721.list
+  )
+  router.get(
+    '/qrc721/:token',
+    middleware.contract('token'),
+    controller.qrc721.summary
   )
   router.get(
     '/qrc721/:token/txs',

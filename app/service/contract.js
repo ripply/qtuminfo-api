@@ -32,40 +32,29 @@ class ContractService extends Service {
     return result
   }
 
-  async getContractSummary(contractAddress, addressIds) {
+  async getContractSummary({contractAddress, vm, type, addressIds}) {
     const {
-      Contract,
       Qrc20: QRC20, Qrc20Statistics: QRC20Statistics,
       Qrc721: QRC721, Qrc721Statistics: QRC721Statistics
     } = this.ctx.model
     const {balance: balanceService, qrc20: qrc20Service, qrc721: qrc721Service} = this.ctx.service
-    let contract = await Contract.findOne({
-      where: {address: contractAddress},
-      attributes: ['addressString', 'vm', 'type'],
-      include: [
-        {
-          model: QRC20,
-          as: 'qrc20',
-          required: false,
-          attributes: ['name', 'symbol', 'decimals', 'totalSupply', 'version'],
-          include: [{
-            model: QRC20Statistics,
-            as: 'statistics',
-            required: true
-          }]
-        },
-        {
-          model: QRC721,
-          as: 'qrc721',
-          required: false,
-          attributes: ['name', 'symbol', 'totalSupply'],
-          include: [{
-            model: QRC721Statistics,
-            as: 'statistics',
-            required: true
-          }]
-        }
-      ]
+    let qrc20 = await QRC20.findOne({
+      where: {contractAddress},
+      attributes: ['name', 'symbol'],
+      include: [{
+        model: QRC20Statistics,
+        as: 'statistics',
+        required: true
+      }]
+    })
+    let qrc721 = await QRC721.findOne({
+      where: {contractAddress},
+      attributes: ['name', 'symbol'],
+      include: [{
+        model: QRC721Statistics,
+        as: 'statistics',
+        required: true
+      }]
     })
     let [
       {totalReceived, totalSent},
@@ -83,26 +72,18 @@ class ContractService extends Service {
     return {
       address: contractAddress.toString('hex'),
       addressHex: contractAddress,
-      vm: contract.vm,
-      type: contract.type,
-      ...contract.type === 'qrc20' ? {
+      vm,
+      type,
+      ...type === 'qrc20' ? {
         qrc20: {
-          name: contract.qrc20.name,
-          symbol: contract.qrc20.symbol,
-          decimals: contract.qrc20.decimals,
-          totalSupply: contract.qrc20.totalSupply,
-          version: contract.qrc20.version,
-          holders: contract.qrc20.statistics.holders,
-          transactions: contract.qrc20.statistics.transactions
+          name: qrc20.name,
+          symbol: qrc20.symbol
         }
       } : {},
-      ...contract.type === 'qrc721' ? {
+      ...type === 'qrc721' ? {
         qrc721: {
-          name: contract.qrc721.name,
-          symbol: contract.qrc721.symbol,
-          totalSupply: contract.qrc721.totalSupply,
-          holders: contract.qrc721.statistics.holders,
-          transactions: contract.qrc721.statistics.transactions
+          name: qrc721.name,
+          symbol: qrc721.symbol,
         }
       } : {},
       balance: totalReceived - totalSent,

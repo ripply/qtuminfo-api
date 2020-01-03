@@ -1,6 +1,28 @@
 const {Service} = require('egg')
 
 class QRC721Service extends Service {
+  async getQRC721Summary(contractAddress) {
+    const {Qrc721: QRC721, Qrc721Statistics: QRC721Statistics} = this.ctx.model
+    let qrc721 = await QRC721.findOne({
+      where: {contractAddress},
+      attributes: ['name', 'symbol', 'totalSupply'],
+      include: [{
+        model: QRC721Statistics,
+        as: 'statistics',
+        required: true
+      }]
+    })
+    return {
+      address: contractAddress.toString('hex'),
+      addressHex: contractAddress,
+      name: qrc721.name,
+      symbol: qrc721.symbol,
+      totalSupply: qrc721.totalSupply,
+      holders: qrc721.statistics.holders,
+      transactions: qrc721.statistics.transactions
+    }
+  }
+
   async listQRC721Tokens() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper

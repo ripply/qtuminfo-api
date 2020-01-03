@@ -1,6 +1,21 @@
 const {Controller} = require('egg')
 
 class QRC721Controller extends Controller {
+  async summary() {
+    const {ctx} = this
+    ctx.assert(ctx.state.token.type === 'qrc721', 404)
+    let summary = await ctx.service.contract.getContractSummary(ctx.state.token.contractAddress)
+    ctx.body = {
+      address: summary.addressHex.toString('hex'),
+      addressHex: summary.addressHex.toString('hex'),
+      name: summary.name,
+      symbol: summary.symbol,
+      totalSupply: summary.totalSupply.toString(),
+      holders: summary.holders,
+      transactions: summary.transactions
+    }
+  }
+
   async list() {
     const {ctx} = this
     let {totalCount, tokens} = await ctx.service.qrc721.listQRC721Tokens()
