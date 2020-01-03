@@ -1,4 +1,4 @@
-module.exports = ({ignoreGenesis}) => async function pagination(ctx, next) {
+module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx, next) {
   const {Header} = ctx.model
   const {gte: $gte, lte: $lte} = ctx.app.Sequelize.Op
 
