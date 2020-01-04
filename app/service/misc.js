@@ -60,9 +60,7 @@ class MiscService extends Service {
       qrc20Results = (await QRC20.findAll({
         where: {
           [$or]: [
-            where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), {[$like]: ['', ...id.toLowerCase(), ''].join('%')}),
             where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`}),
-            where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: ['', ...id.toLowerCase(), ''].join('%')}),
             where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`})
           ]
         },
@@ -74,7 +72,7 @@ class MiscService extends Service {
         SELECT contract.address_string AS address, contract.address AS addressHex FROM (
           SELECT contract_address FROM qrc20_statistics
           WHERE contract_address IN ${qrc20Results}
-          ORDER BY holders DESC LIMIT 1
+          ORDER BY transactions DESC LIMIT 1
         ) qrc20_balance
         INNER JOIN contract ON contract.address = qrc20_balance.contract_address
       `, {type: db.QueryTypes.SELECT})
@@ -98,9 +96,7 @@ class MiscService extends Service {
       qrc721Results = (await QRC721.findAll({
         where: {
           [$or]: [
-            where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), {[$like]: ['', ...id.toLowerCase(), ''].join('%')}),
             where(fn('LOWER', fn('CONVERT', literal('name USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`}),
-            where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: ['', ...id.toLowerCase(), ''].join('%')}),
             where(fn('LOWER', fn('CONVERT', literal('symbol USING utf8mb4'))), {[$like]: `%${id.toLowerCase()}%`})
           ]
         },
@@ -112,7 +108,7 @@ class MiscService extends Service {
         SELECT contract.address_string AS address, contract.address AS addressHex FROM (
           SELECT contract_address FROM qrc721_statistics
           WHERE contract_address IN ${qrc721Results}
-          ORDER BY holders DESC LIMIT 1
+          ORDER BY transactions DESC LIMIT 1
         ) qrc721_token
         INNER JOIN contract ON contract.address = qrc721_token.contract_address
       `, {type: db.QueryTypes.SELECT})
