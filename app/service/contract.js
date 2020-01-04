@@ -384,7 +384,10 @@ class ContractService extends Service {
       WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
         AND log._id > (SELECT MAX(log_id) FROM evm_receipt_log_tag)
     `, {type: db.QueryTypes.SELECT})
-    await EVMReceiptLogTag.bulkCreate(logs.map(log => ({tag: 'qrc20_transfer', logId: log._id})), {validate: false})
+    await EVMReceiptLogTag.bulkCreate(
+      logs.map(log => ({tag: 'qrc20_transfer', logId: log._id})),
+      {validate: false, logging: false}
+    )
   }
 
   async transformHexAddresses(addresses) {
