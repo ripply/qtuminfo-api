@@ -111,7 +111,7 @@ class AddressController extends Controller {
       transactions: transactions.map(transaction => ({
         id: transaction.id.toString('hex'),
         blockHeight: transaction.blockHeight,
-        blockHash: transaction.blockHash && transaction.blockHash.toString('hex'),
+        blockHash: transaction.blockHash?.toString('hex'),
         timestamp: transaction.timestamp,
         confirmations: transaction.confirmations,
         amount: transaction.amount.toString(),
@@ -134,7 +134,7 @@ class AddressController extends Controller {
         transactionId: transaction.transactionId.toString('hex'),
         outputIndex: transaction.outputIndex,
         blockHeight: transaction.blockHeight,
-        blockHash: transaction.blockHash && transaction.blockHash.toString('hex'),
+        blockHash: transaction.blockHash?.toString('hex'),
         timestamp: transaction.timestamp,
         confirmations: transaction.confirmations,
         type: transaction.scriptPubKey.type,
@@ -174,9 +174,9 @@ class AddressController extends Controller {
         timestamp: transaction.timestamp,
         confirmations: transaction.confirmations,
         from: transaction.from,
-        fromHex: transaction.fromHex && transaction.fromHex.toString('hex'),
+        fromHex: transaction.fromHex?.toString('hex'),
         to: transaction.to,
-        toHex: transaction.toHex && transaction.toHex.toString('hex'),
+        toHex: transaction.toHex?.toString('hex'),
         value: transaction.value.toString(),
         amount: transaction.amount.toString()
       }))
@@ -191,9 +191,9 @@ class AddressController extends Controller {
       transactionId: transaction.transactionId.toString('hex'),
       outputIndex: transaction.outputIndex,
       from: transaction.from,
-      fromHex: transaction.fromHex && transaction.fromHex.toString('hex'),
+      fromHex: transaction.fromHex?.toString('hex'),
       to: transaction.to,
-      toHex: transaction.toHex && transaction.toHex.toString('hex'),
+      toHex: transaction.toHex?.toString('hex'),
       value: transaction.value.toString(),
       amount: transaction.amount.toString()
     }))
@@ -221,11 +221,9 @@ class AddressController extends Controller {
       totalCount,
       transactions: transactions.map(tx => ({
         id: tx.id.toString('hex'),
-        ...tx.block ? {
-          blockHash: tx.block.hash.toString('hex'),
-          blockHeight: tx.block.height,
-          timestamp: tx.block.timestamp
-        } : {},
+        blockHash: tx.block?.hash.toString('hex'),
+        blockHeight: tx.block?.height,
+        timestamp: tx.block?.timestamp,
         amount: tx.amount.toString(),
         balance: tx.balance.toString()
       }))

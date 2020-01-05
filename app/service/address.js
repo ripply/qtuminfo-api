@@ -294,8 +294,8 @@ class AddressService extends Service {
           blockHash: transaction.blockHash,
           timestamp: transaction.timestamp,
           confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
-          ...from && typeof from === 'object' ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
-          ...to && typeof to === 'object' ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
+          ...from?.hex ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
+          ...to?.hex ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
           value,
           amount: BigInt(Boolean(toAddress) - Boolean(fromAddress)) * value
         }
@@ -377,8 +377,8 @@ class AddressService extends Service {
       return {
         transactionId: transaction.transaction.id,
         outputIndex: transaction.outputIndex,
-        ...from && typeof addresses[0] === 'object' ? {from: addresses[0].hex.toString('hex'), fromHex: addresses[0].hex} : {from: addresses[0]},
-        ...to && typeof addresses[1] === 'object' ? {to: addresses[1].hex.toString('hex'), toHex: addresses[1].hex} : {to: addresses[1]},
+        ...addresses[0]?.hex ? {from: addresses[0].hex.toString('hex'), fromHex: addresses[0].hex} : {from: addresses[0]},
+        ...addresses[1]?.hex ? {to: addresses[1].hex.toString('hex'), toHex: addresses[1].hex} : {to: addresses[1]},
         value,
         amount: BigInt(isTo - isFrom) * value
       }

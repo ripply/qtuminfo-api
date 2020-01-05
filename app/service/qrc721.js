@@ -142,8 +142,8 @@ class QRC721Service extends Service {
           blockHash: transaction.blockHash,
           timestamp: transaction.timestamp,
           confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
-          ...from && typeof from === 'object' ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
-          ...to && typeof to === 'object' ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
+          ...from?.hex ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
+          ...to?.hex ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
           tokenId: transaction.topic4.toString('hex')
         }
       })

@@ -30,7 +30,7 @@ module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx
       attributes: ['height'],
       order: [['timestamp', 'ASC']]
     })
-    if (header && header.height > fromBlock) {
+    if (header?.height > fromBlock) {
       fromBlock = header.height
     }
   }
@@ -42,7 +42,7 @@ module.exports = ({ignoreGenesis = false} = {}) => async function pagination(ctx
       attributes: ['height'],
       order: [['timestamp', 'DESC']]
     })
-    if (header && (toBlock == null || header.height < toBlock)) {
+    if (toBlock == null || header?.height < toBlock) {
       toBlock = header.height
     }
   }

@@ -33,7 +33,7 @@ class TransactionController extends Controller {
 
   async recent() {
     const {ctx} = this
-    let count = Number.parseInt(ctx.query.count || 10)
+    let count = Number.parseInt(ctx.query.count ?? 10)
     let ids = await ctx.service.transaction.getRecentTransactions(count)
     ctx.body = await Promise.all(ids.map(
       id => ctx.service.transaction.getTransaction(Buffer.from(id, 'hex'))

@@ -60,7 +60,7 @@ class QRC20Service extends Service {
         symbol: item.symbol.toString(),
         decimals: item.decimals,
         totalSupply: BigInt(`0x${item.totalSupply.toString('hex')}`),
-        version: item.version && item.version.toString(),
+        version: item.version?.toString(),
         holders: item.holders,
         transactions: item.transactions
       }))
@@ -392,7 +392,7 @@ class QRC20Service extends Service {
       })
       for (let {balance, contract} of intialBalanceList) {
         let address = contract.addressString
-        initialBalanceMap.set(address, (initialBalanceMap.get(address) || 0n) + balance)
+        initialBalanceMap.set(address, initialBalanceMap.get(address) ?? 0n + balance)
       }
       let {blockHeight, indexInBlock} = list[0]
       let latestLogs = await EVMReceiptLog.findAll({
@@ -427,7 +427,7 @@ class QRC20Service extends Service {
       for (let log of latestLogs) {
         let address = log.contract.addressString
         let amount = BigInt(`0x${log.data.toString('hex')}`)
-        let balance = initialBalanceMap.get(address) || 0n
+        let balance = initialBalanceMap.get(address) ?? 0n
         if (addressSet.has(log.topic2.slice(12).toString('hex'))) {
           balance += amount
         }
@@ -474,7 +474,7 @@ class QRC20Service extends Service {
         }
       }
       for (let token of result.tokens) {
-        let initial = initialBalanceMap.get(token.address) || 0n
+        let initial = initialBalanceMap.get(token.address) ?? 0n
         token.balance = initial
         initial -= token.amount
         initialBalanceMap.set(token.address, initial)
@@ -545,8 +545,8 @@ class QRC20Service extends Service {
             symbol: transaction.symbol.toString(),
             decimals: transaction.decimals
           },
-          ...from && typeof from === 'object' ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
-          ...to && typeof to === 'object' ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
+          ...from?.hex ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
+          ...to?.hex ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
           value: BigInt(`0x${transaction.data.toString('hex')}`)
         }
       })
@@ -604,8 +604,8 @@ class QRC20Service extends Service {
           blockHash: transaction.blockHash,
           timestamp: transaction.timestamp,
           confirmations: this.app.blockchainInfo.tip.height - transaction.blockHeight + 1,
-          ...from && typeof from === 'object' ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
-          ...to && typeof to === 'object' ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
+          ...from?.hex ? {from: from.hex.toString('hex'), fromHex: from.hex} : {from},
+          ...to?.hex ? {to: to.hex.toString('hex'), toHex: to.hex} : {to},
           value: BigInt(`0x${transaction.data.toString('hex')}`)
         }
       })
@@ -634,7 +634,7 @@ class QRC20Service extends Service {
       list: list.map(({balance}, index) => {
         let address = addresses[index]
         return {
-          ...address && typeof address === 'object' ? {
+          ...address?.hex ? {
             address: address.hex.toString('hex'),
             addressHex: address.hex.toString('hex')
           } : {address},

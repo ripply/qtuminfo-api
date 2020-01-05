@@ -30,8 +30,8 @@ class BalanceService extends Service {
           SUM(CAST(GREATEST(-value, 0) AS DECIMAL(24))) AS totalSent
         FROM balance_change WHERE address_id = ${ids[0]} AND block_height > 0
       `, {type: db.QueryTypes.SELECT})
-      totalReceived = result.totalReceived == null ? 0n : BigInt(result.totalReceived)
-      totalSent = result.totalSent == null ? 0n : BigInt(result.totalSent)
+      totalReceived = BigInt(result.totalReceived ?? 0)
+      totalSent = BigInt(result.totalSent ?? 0)
     } else {
       let [result] = await db.query(sql`
         SELECT
@@ -43,8 +43,8 @@ class BalanceService extends Service {
           GROUP BY transaction_id
         ) AS temp
       `, {type: db.QueryTypes.SELECT})
-      totalReceived = result.totalReceived == null ? 0n : BigInt(result.totalReceived)
-      totalSent = result.totalSent == null ? 0n : BigInt(result.totalSent)
+      totalReceived = BigInt(result.totalReceived ?? 0)
+      totalSent = BigInt(result.totalSent ?? 0)
     }
     return {totalReceived, totalSent}
   }
@@ -213,10 +213,10 @@ class BalanceService extends Service {
         WHERE address_id IN ${ids}
           AND (block_height, index_in_block, transaction_id) < (${blockHeight}, ${indexInBlock}, ${transactionId})
       `, {type: db.QueryTypes.SELECT})
-      initialBalance = BigInt(value || 0n)
+      initialBalance = BigInt(value ?? 0)
     }
     let transactions = list.map(item => ({
-      id: item.id || item.transaction.id,
+      id: item.id ?? item.transaction.id,
       ...item.header ? {
         block: {
           hash: item.header.hash,

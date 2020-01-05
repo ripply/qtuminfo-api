@@ -37,7 +37,7 @@ class BulletinService extends Service {
     if (locale == null) {
       return result
     } else {
-      return {[locale]: result[locale] || result.default}
+      return {[locale]: result[locale] ?? result.default}
     }
   }
 }

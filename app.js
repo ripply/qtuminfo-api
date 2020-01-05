@@ -121,7 +121,7 @@ module.exports = app => {
     }
     let list = await ctx.service.block.getBlockAddressTransactions(tip.height)
     for (let i = 0; i < transactions.length; ++i) {
-      for (let address of list[i] || []) {
+      for (let address of list[i] ?? []) {
         namespace.to(`address/${address}`).emit('address/transaction', {address, id: transactions[i]})
       }
     }

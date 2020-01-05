@@ -43,11 +43,11 @@ module.exports = app => {
       type: INTEGER(3).UNSIGNED,
       get() {
         let senderType = this.getDataValue('senderType')
-        return addressTypeMap[senderType] || null
+        return addressTypeMap[senderType] ?? null
       },
       set(senderType) {
         if (senderType != null) {
-          this.setDataValue('senderType', addressTypes[senderType] || 0)
+          this.setDataValue('senderType', addressTypes[senderType] ?? 0)
         }
       }
     },

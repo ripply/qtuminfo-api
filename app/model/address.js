@@ -33,11 +33,11 @@ module.exports = app => {
       type: INTEGER(3).UNSIGNED,
       get() {
         let type = this.getDataValue('type')
-        return addressTypeMap[type] || null
+        return addressTypeMap[type] ?? null
       },
       set(type) {
         if (type != null) {
-          this.setDataValue('type', addressTypes[type] || 0)
+          this.setDataValue('type', addressTypes[type] ?? 0)
         }
       },
       unique: 'address'
@@ -52,10 +52,10 @@ module.exports = app => {
   }, {freezeTableName: true, underscored: true, timestamps: false})
 
   Address.getType = function(type) {
-    return addressTypeMap[type] || null
+    return addressTypeMap[type] ?? null
   }
   Address.parseType = function(type) {
-    return addressTypes[type] || 0
+    return addressTypes[type] ?? 0
   }
 
   return Address

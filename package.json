@@ -2,9 +2,9 @@
   "name": "qtuminfo-api",
   "private": true,
   "scripts": {
-    "start": "egg-scripts start --title=qtuminfo-api --sticky --daemon",
+    "start": "egg-scripts start --title=qtuminfo-api --sticky --daemon --harmony-optional-chaining --harmony-nullish",
     "stop": "egg-scripts stop --title=qtuminfo-api",
-    "dev": "egg-bin dev",
+    "dev": "egg-bin dev --harmony-optional-chaining --harmony-nullish",
     "lint": "eslint --ext .js app config"
   },
   "dependencies": {

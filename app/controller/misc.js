@@ -13,7 +13,7 @@ class MiscController extends Controller {
       totalCount,
       list: list.map(item => ({
         address: item.addressHex ? item.addressHex.toString('hex') : item.address,
-        addressHex: item.addressHex && item.addressHex.toString('hex'),
+        addressHex: item.addressHex?.toString('hex'),
         balance: item.balance.toString()
       }))
     }

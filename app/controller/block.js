@@ -19,13 +19,15 @@ class BlockController extends Controller {
       height: block.height,
       version: block.version,
       prevHash: block.prevHash.toString('hex'),
-      ...block.nextHash ? {nextHash: block.nextHash.toString('hex')} : {},
+      nextHash: block.nextHash?.toString('hex'),
       merkleRoot: block.merkleRoot.toString('hex'),
       timestamp: block.timestamp,
       bits: block.bits.toString(16),
       nonce: block.nonce,
       hashStateRoot: block.hashStateRoot.toString('hex'),
       hashUTXORoot: block.hashUTXORoot.toString('hex'),
+      stakePrevTxId: block.stakePrevTxId.toString('hex'),
+      stakeOutputIndex: block.stakeOutputIndex,
       prevOutStakeHash: block.stakePrevTxId.toString('hex'),
       prevOutStakeN: block.stakeOutputIndex,
       signature: block.signature.toString('hex'),
@@ -110,7 +112,7 @@ class BlockController extends Controller {
 
   async recent() {
     const {ctx} = this
-    let count = Number.parseInt(ctx.query.count || 10)
+    let count = Number.parseInt(ctx.query.count ?? 10)
     let blocks = await ctx.service.block.getRecentBlocks(count)
     ctx.body = blocks.map(block => ({
       hash: block.hash.toString('hex'),

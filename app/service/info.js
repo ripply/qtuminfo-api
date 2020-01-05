@@ -3,13 +3,13 @@ const {Service} = require('egg')
 class InfoService extends Service {
   async getInfo() {
     let height = this.app.blockchainInfo.tip.height
-    let blockTime = await this.ctx.service.cache.getCache('blocktime') || 0
-    let difficulty = await this.ctx.service.cache.getCache('difficulty') || 0
-    let stakeWeight = await this.ctx.service.cache.getCache('stakeweight') || 0
-    let fullnodes = await this.ctx.service.cache.getCache('fullnodes') || 0
-    let feeRate = (await this.ctx.service.cache.getCache('feerate') || []).find(item => item.blocks === 10).feeRate || 0.004
-    let dgpInfo = await this.ctx.service.cache.getCache('dgpinfo') || {}
-    let addresses = await this.ctx.service.cache.getCache('addresses') || 0
+    let blockTime = await this.ctx.service.cache.getCache('blocktime') ?? 0
+    let difficulty = await this.ctx.service.cache.getCache('difficulty') ?? 0
+    let stakeWeight = await this.ctx.service.cache.getCache('stakeweight') ?? 0
+    let fullnodes = await this.ctx.service.cache.getCache('fullnodes') ?? 0
+    let feeRate = (await this.ctx.service.cache.getCache('feerate') ?? []).find(item => item.blocks === 10)?.feeRate ?? 0.004
+    let dgpInfo = await this.ctx.service.cache.getCache('dgpinfo') ?? {}
+    let addresses = await this.ctx.service.cache.getCache('addresses') ?? 0
     return {
       height,
       supply: this.getTotalSupply(),
@@ -96,12 +96,12 @@ class InfoService extends Service {
     let client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
     let results = await Promise.all([2, 4, 6, 10, 12, 24].map(blocks => client.estimatesmartfee(blocks)))
     return [
-      {blocks: 2, feeRate: results[0].feerate || 0.004},
-      {blocks: 4, feeRate: results[1].feerate || 0.004},
-      {blocks: 6, feeRate: results[2].feerate || 0.004},
-      {blocks: 10, feeRate: results[3].feerate || 0.004},
-      {blocks: 12, feeRate: results[4].feerate || 0.004},
-      {blocks: 24, feeRate: results[5].feerate || 0.004}
+      {blocks: 2, feeRate: results[0].feerate ?? 0.004},
+      {blocks: 4, feeRate: results[1].feerate ?? 0.004},
+      {blocks: 6, feeRate: results[2].feerate ?? 0.004},
+      {blocks: 10, feeRate: results[3].feerate ?? 0.004},
+      {blocks: 12, feeRate: results[4].feerate ?? 0.004},
+      {blocks: 24, feeRate: results[5].feerate ?? 0.004}
     ]
   }
 

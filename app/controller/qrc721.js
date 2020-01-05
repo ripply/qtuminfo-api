@@ -46,9 +46,9 @@ class QRC721Controller extends Controller {
         timestamp: transaction.timestamp,
         confirmations: transaction.confirmations,
         from: transaction.from,
-        fromHex: transaction.fromHex && transaction.fromHex.toString('hex'),
+        fromHex: transaction.fromHex?.toString('hex'),
         to: transaction.to,
-        toHex: transaction.toHex && transaction.toHex.toString('hex'),
+        toHex: transaction.toHex?.toString('hex'),
         tokenId: transaction.tokenId
       }))
     }

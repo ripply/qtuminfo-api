@@ -11,7 +11,7 @@ class BlockService extends Service {
         where: {height: cachedBlock.height + 1},
         attributes: ['hash']
       })
-      cachedBlock.nextHash = nextHeader && nextHeader.hash
+      cachedBlock.nextHash = nextHeader?.hash
       cachedBlock.confirmations = this.app.blockchainInfo.tip.height - cachedBlock.height + 1
       return cachedBlock
     }
@@ -62,7 +62,7 @@ class BlockService extends Service {
       height: result.height,
       version: result.version,
       prevHash: result.prevHash,
-      nextHash: nextHeader && nextHeader.hash,
+      nextHash: nextHeader?.hash,
       merkleRoot: result.merkleRoot,
       timestamp: result.timestamp,
       bits: result.bits,
@@ -327,7 +327,7 @@ class BlockService extends Service {
     `, {type: db.QueryTypes.SELECT})
     return {
       totalCount,
-      list: list.map(({address, blocks, reward, balance}) => ({address, blocks, reward, balance: BigInt(balance || 0)})),
+      list: list.map(({address, blocks, reward, balance}) => ({address, blocks, reward, balance: BigInt(balance ?? 0)})),
       blocks: this.app.blockchainInfo.tip.height - fromBlock + 1
     }
   }
@@ -365,7 +365,7 @@ class BlockService extends Service {
       ]
     })
     for (let {transaction, address} of balanceChanges) {
-      result[transaction.indexInBlock] = result[transaction.indexInBlock] || new Set()
+      result[transaction.indexInBlock] = result[transaction.indexInBlock] ?? new Set()
       result[transaction.indexInBlock].add(address.string)
     }
     let receipts = await EVMReceipt.findAll({
@@ -373,7 +373,7 @@ class BlockService extends Service {
       attributes: ['indexInBlock', 'senderType', 'senderData']
     })
     for (let {indexInBlock, senderType, senderData} of receipts) {
-      result[indexInBlock] = result[indexInBlock] || new Set()
+      result[indexInBlock] = result[indexInBlock] ?? new Set()
       result[indexInBlock].add(new RawAddress({type: senderType, data: senderData, chain: this.app.chain}).toString())
     }
     let receiptLogs = await EVMReceiptLog.findAll({
