@@ -96,9 +96,9 @@ CREATE TABLE `evm_event_abi` (
   `anonymous` tinyint(1) NOT NULL DEFAULT '0',
   `contract_tag` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`_id`),
+  UNIQUE KEY `abi` (`contract_tag`,`id`) USING BTREE,
   KEY `id` (`id`),
-  KEY `name` (`name`),
-  KEY `contract_tag` (`contract_tag`)
+  KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE `evm_function_abi` (
@@ -111,9 +111,9 @@ CREATE TABLE `evm_function_abi` (
   `state_mutability` enum('pure','view','nonpayable','payable') CHARACTER SET utf8 NOT NULL,
   `contract_tag` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`_id`),
+  UNIQUE KEY `abi` (`contract_tag`,`id`) USING BTREE,
   KEY `id` (`id`),
-  KEY `name` (`name`),
-  KEY `contract_tag` (`contract_tag`)
+  KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE `evm_receipt` (
