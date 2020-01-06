@@ -713,7 +713,7 @@ class TransactionService extends Service {
                 inputs: inputs.map((input, index) => ({
                   name: input.name,
                   type: input.type,
-                  value: this.decodeSolitityParams(abiResult[index], input.type)
+                  value: this.decodeSolitityParameter(input.type, abiResult[index])
                 })),
                 stateMutability
               }
@@ -741,7 +741,7 @@ class TransactionService extends Service {
         for (let {name, inputs, anonymous, contract_tag: tag} of abiList) {
           let abi = new Solidity.EventABI({name, inputs, anonymous})
           try {
-            let abiResult = abi.decode({topics: anonymous ? topics : topics.slice(1), data})
+            let abiResult = abi.decode(topics, data)
             log.abi = {
               tag,
               name,
@@ -749,7 +749,7 @@ class TransactionService extends Service {
                 name: input.name,
                 type: input.type,
                 indexed: input.indexed,
-                value: this.decodeSolitityParams(abiResult[index], input.type)
+                value: this.decodeSolitityParameter(input.type, abiResult[index])
               })),
               anonymous: Boolean(anonymous)
             }
@@ -1102,11 +1102,35 @@ class TransactionService extends Service {
     return result
   }
 
-  decodeSolitityParams(value, type) {
-    if (type.startsWith('uint') || type.startsWith('int')) {
-      return value.toString()
+  decodeSolidityObject(type, parameter) {
+    let result = {}
+    for (let key of Object.keys(type)) {
+      let subType = type[key]
+      let subParam = parameter[key]
+      if (typeof subType === 'object') {
+        result[key] = this.decodeSolidityObject(subType, subParam)
+      } else {
+        result[key] = this.decodeSolitityParameter(subType, subParam)
+      }
     }
-    return value
+    return result
+  }
+
+  decodeSolitityParameter(type, parameter) {
+    if (typeof type === 'object') {
+      let key = Object.keys(type)[0]
+      return this.decodeSolidityObject(key, parameter)
+    } else if (Array.isArray(parameter)) {
+      let index = type.indexOf('[')
+      let itemType = index < 0 ? type : type.slice(0, index)
+      return parameter.map(param => this.decodeSolitityParameter(itemType, param))
+    } else if (Buffer.isBuffer(parameter)) {
+      return parameter.toString('hex')
+    } else if (type.startsWith('int') || type.startsWith('uint')) {
+      return parameter.toString()
+    } else {
+      return parameter
+    }
   }
 }
 
