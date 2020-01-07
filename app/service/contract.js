@@ -390,6 +390,29 @@ class ContractService extends Service {
     )
   }
 
+  async createSolidityABI(tag, abiList) {
+    const {Solidity} = this.app.qtuminfo.lib
+    const {EvmFunctionAbi: EVMFunctionABI, EvmEventAbi: EVMEventABI} = this.ctx.model
+    let functionABIs = abiList.filter(abi => abi.type !== 'event').map(abi => new Solidity.MethodABI(abi))
+    let eventABIs = abiList.filter(abi => abi.type === 'event').map(abi => new Solidity.EventABI(abi))
+    await EVMFunctionABI.bulkCreate(functionABIs.map(abi => ({
+      id: abi.id,
+      type: abi.type,
+      name: abi.name ?? '',
+      inputs: abi.inputs ?? [],
+      outputs: abi.outputs ?? [],
+      stateMutability: abi.stateMutability,
+      contractTag: tag
+    })), {updateOnDuplicates: ['type', 'name', 'inputs', 'outputs', 'stateMutability']})
+    await EVMEventABI.bulkCreate(eventABIs.map(abi => ({
+      id: abi.id,
+      name: abi.name,
+      inputs: abi.inputs,
+      anonymous: abi.anonymous,
+      contractTag: tag
+    })), {updateOnDuplicates: ['name', 'inputs', 'anonymous']})
+  }
+
   async transformHexAddresses(addresses) {
     if (addresses.length === 0) {
       return []

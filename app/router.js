@@ -229,6 +229,8 @@ module.exports = app => {
   router.get('/captcha', controller.captcha.create)
   router.post('/qtuminfo-translation', controller.translation.create)
 
+  router.post('/solidity/abi/create', controller.contract.createSolidityABI)
+
   router.post('/admin/login', controller.admin.auth.login)
 
   router.get(

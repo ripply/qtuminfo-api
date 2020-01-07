@@ -214,6 +214,13 @@ class ContractController extends Controller {
       }))
     }
   }
+
+  async createSolidityABI() {
+    const {ctx} = this
+    let {tag, abiList} = ctx.request.body
+    await ctx.service.contract.createSolidityABI(tag, abiList)
+    ctx.body = null
+  }
 }
 
 module.exports = ContractController
