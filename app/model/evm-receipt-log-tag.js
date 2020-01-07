@@ -3,7 +3,7 @@ module.exports = app => {
 
   let EVMReceiptLogTag = app.model.define('evm_receipt_log_tag', {
     tag: {
-      type: STRING(20),
+      type: STRING(32),
       primaryKey: true
     },
     logId: {

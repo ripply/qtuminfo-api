@@ -157,7 +157,7 @@ CREATE TABLE `evm_receipt_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 
 CREATE TABLE `evm_receipt_log_tag` (
-  `tag` varchar(20) NOT NULL,
+  `tag` varchar(32) NOT NULL,
   `log_id` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`tag`, `log_id`),
   KEY `log_id` (`log_id`)
