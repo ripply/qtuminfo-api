@@ -40,6 +40,7 @@ exports.ratelimit = {
 exports.io = {
   redis: {
     ...redisConfig,
+    ...redisConfig.password ? {} : {password: undefined},
     key: 'qtuminfo-api-socket.io'
   },
   namespace: {
