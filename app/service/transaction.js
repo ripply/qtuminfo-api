@@ -13,6 +13,7 @@ class TransactionService extends Service {
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
     let cache = this.ctx.service.cache.getLRUCache('transaction')
+    await cache.reset()
     let transaction = await Transaction.findOne({
       where: {id},
       include: [
@@ -677,8 +678,8 @@ class TransactionService extends Service {
         if (Buffer.compare(byteCode, Buffer.alloc(1)) === 0) {
           let abiList = await db.query(sql`
             SELECT state_mutability, contract_tag FROM evm_function_abi
-            WHERE id = ${Buffer.alloc(0)} AND type = 'fallback' AND (
-              contract_tag IS NULL OR contract_tag IN (
+            WHERE id = ${Buffer.alloc(4)} AND type = 'fallback' AND (
+              contract_address = ${output.evmReceipt.contractAddressHex} OR contract_tag IN (
                 SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
               )
             )
@@ -697,17 +698,17 @@ class TransactionService extends Service {
           let abiList = await db.query(sql`
             SELECT type, name, inputs, state_mutability, contract_tag FROM evm_function_abi
             WHERE id = ${byteCode.slice(0, 4)} AND (
-              contract_tag IS NULL OR contract_tag IN (
+              contract_address = ${output.evmReceipt.contractAddressHex} OR contract_tag IN (
                 SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
               )
             )
           `, {type: db.QueryTypes.SELECT})
-          for (let {type, name, inputs, state_mutability: stateMutability, contract_tag: tag} of abiList) {
+          for (let {type, name, inputs, state_mutability: stateMutability} of abiList) {
             let abi = new Solidity.MethodABI({type, name, inputs, stateMutability})
             try {
               let abiResult = abi.decodeInputs(byteCode.slice(4))
               result.receipt.abi = {
-                tag,
+                tag: abiList.map(abi => abi.contract_tag).filter(Boolean),
                 type,
                 name,
                 inputs: inputs.map((input, index) => ({
@@ -733,17 +734,17 @@ class TransactionService extends Service {
         let abiList = await db.query(sql`
           SELECT name, inputs, anonymous, contract_tag FROM evm_event_abi
           WHERE (id = ${topics[0] ?? Buffer.alloc(0)} OR anonymous = FALSE) AND (
-            contract_tag IS NULL OR contract_tag IN (
+            contract_address = ${addressHex} OR contract_tag IN (
               SELECT tag FROM contract_tag WHERE contract_address = ${addressHex}
             )
           )
         `, {type: db.QueryTypes.SELECT})
-        for (let {name, inputs, anonymous, contract_tag: tag} of abiList) {
+        for (let {name, inputs, anonymous} of abiList) {
           let abi = new Solidity.EventABI({name, inputs, anonymous})
           try {
             let abiResult = abi.decode(topics, data)
             log.abi = {
-              tag,
+              tag: abiList.map(abi => abi.contract_tag).filter(Boolean),
               name,
               inputs: inputs.map((input, index) => ({
                 name: input.name,

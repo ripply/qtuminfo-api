@@ -15,6 +15,10 @@ module.exports = app => {
       type: BOOLEAN,
       defaultValue: false
     },
+    contractAddress: {
+      type: CHAR(20).BINARY,
+      allowNull: true
+    },
     contractTag: {
       type: STRING(32),
       allowNull: true

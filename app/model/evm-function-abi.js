@@ -20,6 +20,10 @@ module.exports = app => {
       type: ENUM,
       values: ['pure', 'view', 'nonpayable', 'payable']
     },
+    contractAddress: {
+      type: CHAR(20).BINARY,
+      allowNull: true
+    },
     contractTag: {
       type: STRING(32),
       allowNull: true
