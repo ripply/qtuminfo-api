@@ -13,7 +13,6 @@ class TransactionService extends Service {
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
     let cache = this.ctx.service.cache.getLRUCache('transaction')
-    await cache.reset()
     let transaction = await Transaction.findOne({
       where: {id},
       include: [
@@ -733,7 +732,7 @@ class TransactionService extends Service {
         }
         let abiList = await db.query(sql`
           SELECT name, inputs, anonymous, contract_tag FROM evm_event_abi
-          WHERE (id = ${topics[0] ?? Buffer.alloc(0)} OR anonymous = FALSE) AND (
+          WHERE (id = ${topics[0] ?? Buffer.alloc(0)} OR anonymous = TRUE) AND (
             contract_address = ${addressHex} OR contract_tag IN (
               SELECT tag FROM contract_tag WHERE contract_address = ${addressHex}
             )
