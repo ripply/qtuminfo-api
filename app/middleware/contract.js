@@ -22,13 +22,15 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   }
   let contractResult = await Contract.findOne({
     where: filter,
-    attributes: ['address', 'addressString', 'vm', 'type']
+    attributes: ['address', 'addressString', 'vm', 'type', 'createHeight', 'destructHeight']
   })
   ctx.assert(contractResult, 404)
   contract.contractAddress = contractResult.address
   contract.address = contractResult.addressString
   contract.vm = contractResult.vm
   contract.type = contractResult.type
+  contract.createHeight = contractResult.createHeight
+  contract.destructHeight = contractResult.destructHeight
 
   let addressList = await Address.findAll({
     where: {

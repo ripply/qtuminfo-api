@@ -9,6 +9,8 @@ class ContractController extends Controller {
       addressHex: summary.addressHex.toString('hex'),
       vm: summary.vm,
       type: summary.type,
+      createHeight: summary.createHeight,
+      destructHeight: summary.destructHeight,
       ...summary.type === 'qrc20' ? {
         qrc20: {
           name: summary.qrc20.name,

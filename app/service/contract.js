@@ -32,7 +32,7 @@ class ContractService extends Service {
     return result
   }
 
-  async getContractSummary({contractAddress, vm, type, addressIds}) {
+  async getContractSummary({contractAddress, vm, type, createHeight, destructHeight, addressIds}) {
     const {
       Qrc20: QRC20, Qrc20Statistics: QRC20Statistics,
       Qrc721: QRC721, Qrc721Statistics: QRC721Statistics
@@ -74,6 +74,8 @@ class ContractService extends Service {
       addressHex: contractAddress,
       vm,
       type,
+      createHeight,
+      destructHeight,
       ...type === 'qrc20' ? {
         qrc20: {
           name: qrc20.name,
