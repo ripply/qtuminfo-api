@@ -1,11 +1,6 @@
 const LRU = require('redis-lru')
 const {Service} = require('egg')
 
-const cacheMapping = {
-  block: {namespace: 'block', max: 100},
-  transaction: {namespace: 'transaction', max: 1000}
-}
-
 class CacheService extends Service {
   async getCache(key) {
     let result = await this.app.redis.hget(this.app.name, key)
@@ -29,6 +24,10 @@ class CacheService extends Service {
   }
 
   getLRUCache(namespace) {
+    const cacheMapping = {
+      block: {namespace: `${this.app.name}/block`, max: 100},
+      transaction: {namespace: `${this.app.name}/transaction`, max: 1000}
+    }
     return LRU(this.app.config.redisClient, cacheMapping[namespace])
   }
 }
