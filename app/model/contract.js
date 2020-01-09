@@ -1,5 +1,5 @@
 module.exports = app => {
-  const {CHAR, TEXT, ENUM} = app.Sequelize
+  const {INTEGER, CHAR, ENUM} = app.Sequelize
 
   let Contract = app.model.define('contract', {
     address: {
@@ -16,9 +16,10 @@ module.exports = app => {
       values: ['dgp', 'qrc20', 'qrc721'],
       allowNull: true
     },
-    description: {
-      type: TEXT,
-      defaultValue: ''
+    createHeight: INTEGER.UNSIGNED,
+    destructHeight: {
+      type: INTEGER.UNSIGNED,
+      allowNull: true
     }
   }, {freezeTableName: true, underscored: true, timestamps: false})
 

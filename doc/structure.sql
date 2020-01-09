@@ -59,10 +59,13 @@ CREATE TABLE `contract` (
   `vm` enum('evm','x86') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `type` enum('dgp','qrc20','qrc721') CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
   `bytecode_sha256sum` binary(32) NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `create_height` int(10) unsigned NOT NULL,
+  `destruct_height` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`address`) USING BTREE,
   UNIQUE KEY `address` (`address_string`) USING BTREE,
-  KEY `bytecode` (`bytecode_sha256sum`) USING BTREE
+  KEY `bytecode` (`bytecode_sha256sum`) USING BTREE,
+  KEY `create_height` (`create_height`),
+  KEY `destruct_height` (`destruct_height`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `contract_code` (
