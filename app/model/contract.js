@@ -1,5 +1,5 @@
 module.exports = app => {
-  const {INTEGER, CHAR, ENUM} = app.Sequelize
+  const {INTEGER, BIGINT, CHAR, ENUM} = app.Sequelize
 
   let Contract = app.model.define('contract', {
     address: {
@@ -16,7 +16,16 @@ module.exports = app => {
       values: ['dgp', 'qrc20', 'qrc721'],
       allowNull: true
     },
+    sha256Code: CHAR(32).BINARY,
+    createReceiptId: {
+      type: BIGINT.UNSIGNED,
+      allowNull: true
+    },
     createHeight: INTEGER.UNSIGNED,
+    destructReceiptId: {
+      type: BIGINT.UNSIGNED,
+      allowNull: true
+    },
     destructHeight: {
       type: INTEGER.UNSIGNED,
       allowNull: true
@@ -31,6 +40,10 @@ module.exports = app => {
     Contract.hasMany(EVMReceipt, {as: 'evmReceipts', foreignKey: 'contractAddress'})
     EVMReceiptLog.belongsTo(Contract, {as: 'contract', foreignKey: 'address'})
     Contract.hasMany(EVMReceiptLog, {as: 'evmLogs', foreignKey: 'address'})
+    EVMReceipt.hasMany(Contract, {as: 'createdContracts', foreignKey: 'createReceiptId'})
+    Contract.belongsTo(EVMReceipt, {as: 'createReceipt', foreignKey: 'createReceiptId'})
+    EVMReceipt.hasMany(Contract, {as: 'destructedContracts', foreignKey: 'destructReceiptId'})
+    Contract.belongsTo(EVMReceipt, {as: 'destructReceipt', foreignKey: 'destructReceiptId'})
   }
 
   return Contract

@@ -58,14 +58,18 @@ CREATE TABLE `contract` (
   `address_string` char(40) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `vm` enum('evm','x86') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `type` enum('dgp','qrc20','qrc721') CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `bytecode_sha256sum` binary(32) NOT NULL,
+  `sha256_code` binary(32) NOT NULL,
+  `create_receipt_id` bigint(20) unsigned DEFAULT NULL,
   `create_height` int(10) unsigned NOT NULL,
+  `destruct_receipt_id` bigint(20) unsigned DEFAULT NULL,
   `destruct_height` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`address`) USING BTREE,
   UNIQUE KEY `address` (`address_string`) USING BTREE,
-  KEY `bytecode` (`bytecode_sha256sum`) USING BTREE,
+  KEY `bytecode` (`sha256_code`) USING BTREE,
   KEY `create_height` (`create_height`),
-  KEY `destruct_height` (`destruct_height`)
+  KEY `destruct_height` (`destruct_height`),
+  KEY `create_receipt` (`create_receipt_id`) USING BTREE,
+  KEY `destruct_receipt` (`destruct_receipt_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `contract_code` (
@@ -135,6 +139,8 @@ CREATE TABLE `evm_receipt` (
   `contract_address` binary(20) NOT NULL,
   `excepted` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `excepted_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `state_root` binary(32) NOT NULL,
+  `utxo_root` binary(32) NOT NULL,
   PRIMARY KEY (`_id`),
   UNIQUE KEY `output` (`transaction_id`,`output_index`) USING BTREE,
   UNIQUE KEY `block` (`block_height`,`index_in_block`,`transaction_id`,`output_index`) USING BTREE,
@@ -178,6 +184,8 @@ CREATE TABLE `evm_receipt_mapping` (
   `contract_address` binary(20) NOT NULL,
   `excepted` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `excepted_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `state_root` binary(32) NOT NULL,
+  `utxo_root` binary(32) NOT NULL,
   PRIMARY KEY (`transaction_id`,`output_index`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
 

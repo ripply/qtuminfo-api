@@ -55,7 +55,9 @@ module.exports = app => {
     gasUsed: INTEGER.UNSIGNED,
     contractAddress: CHAR(20).BINARY,
     excepted: STRING(32),
-    exceptedMessage: TEXT
+    exceptedMessage: TEXT,
+    stateRoot: CHAR(32).BINARY,
+    utxoRoot: CHAR(32).BINARY
   }, {freezeTableName: true, underscored: true, timestamps: false})
 
   EVMReceipt.associate = () => {
