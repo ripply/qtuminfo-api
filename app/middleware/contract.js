@@ -2,7 +2,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   ctx.assert(ctx.params[paramName], 404)
   const {Address: RawAddress} = ctx.app.qtuminfo.lib
   const chain = ctx.app.chain
-  const {Address, Contract} = ctx.model
+  const {Address, Transaction, Contract, EvmReceipt: EVMReceipt} = ctx.model
   const {gte: $gte} = ctx.app.Sequelize.Op
 
   let contract = {}
@@ -22,7 +22,33 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   }
   let contractResult = await Contract.findOne({
     where: filter,
-    attributes: ['address', 'addressString', 'vm', 'type', 'createHeight', 'destructHeight']
+    attributes: ['address', 'addressString', 'vm', 'type', 'createHeight', 'destructHeight'],
+    include: [
+      {
+        model: EVMReceipt,
+        as: 'createReceipt',
+        required: false,
+        attributes: ['outputIndex'],
+        include: [{
+          model: Transaction,
+          as: 'transaction',
+          required: true,
+          attributes: ['id']
+        }]
+      },
+      {
+        model: EVMReceipt,
+        as: 'destructReceipt',
+        required: false,
+        attributes: ['outputIndex'],
+        include: [{
+          model: Transaction,
+          as: 'transaction',
+          required: true,
+          attributes: ['id']
+        }]
+      }
+    ]
   })
   ctx.assert(contractResult, 404)
   contract.contractAddress = contractResult.address
@@ -30,7 +56,11 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   contract.vm = contractResult.vm
   contract.type = contractResult.type
   contract.createHeight = contractResult.createHeight
+  contract.createTransactionId = contractResult.createReceipt?.transaction.id
+  contract.createOutputIndex = contractResult.createReceipt?.outputIndex
   contract.destructHeight = contractResult.destructHeight
+  contract.destructTransactionId = contractResult.destructReceipt?.transaction.id
+  contract.destructOutputIndex = contractResult.destructReceipt?.outputIndex
 
   let addressList = await Address.findAll({
     where: {

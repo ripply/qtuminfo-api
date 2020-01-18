@@ -10,7 +10,11 @@ class ContractController extends Controller {
       vm: summary.vm,
       type: summary.type,
       createHeight: summary.createHeight,
+      createTransactionId: summary.createTransactionId?.toString('hex'),
+      createOutputIndex: summary.createOutputIndex,
       destructHeight: summary.destructHeight,
+      destructTransactionId: summary.destructTransactionId?.toString('hex'),
+      destructOutputIndex: summary.destructOutputIndex,
       ...summary.type === 'qrc20' ? {
         qrc20: {
           name: summary.qrc20.name,

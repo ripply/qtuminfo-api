@@ -32,7 +32,13 @@ class ContractService extends Service {
     return result
   }
 
-  async getContractSummary({contractAddress, vm, type, createHeight, destructHeight, addressIds}) {
+  async getContractSummary(contract) {
+    let {
+      contractAddress, vm, type,
+      createHeight, createTransactionId, createOutputIndex,
+      destructHeight, destructTransactionId, destructOutputIndex,
+      addressIds
+    } = contract
     const {
       Qrc20: QRC20, Qrc20Statistics: QRC20Statistics,
       Qrc721: QRC721, Qrc721Statistics: QRC721Statistics
@@ -70,12 +76,16 @@ class ContractService extends Service {
       this.getContractBasicTransactionCount(contractAddress)
     ])
     return {
-      address: contractAddress.toString('hex'),
+      address: contractAddress,
       addressHex: contractAddress,
       vm,
       type,
       createHeight,
+      createTransactionId,
+      createOutputIndex,
       destructHeight,
+      destructTransactionId,
+      destructOutputIndex,
       ...type === 'qrc20' ? {
         qrc20: {
           name: qrc20.name,
