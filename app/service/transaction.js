@@ -31,7 +31,7 @@ class TransactionService extends Service {
             model: Transaction,
             as: 'destTransaction',
             required: true,
-            attributes: ['id']
+            attributes: ['id', 'blockHeight', 'indexInBlock']
           }]
         }
       ]
@@ -85,7 +85,21 @@ class TransactionService extends Service {
             model: Contract,
             as: 'contract',
             required: false,
-            attributes: ['address', 'addressString']
+            attributes: ['address', 'addressString', 'createHeight', 'destructHeight'],
+            include: [
+              {
+                model: EVMReceipt,
+                as: 'createReceipt',
+                required: false,
+                attributes: ['indexInBlock', 'outputIndex']
+              },
+              {
+                model: EVMReceipt,
+                as: 'destructReceipt',
+                required: false,
+                attributes: ['indexInBlock', 'outputIndex']
+              }
+            ]
           }]
         }
       ],
@@ -178,7 +192,21 @@ class TransactionService extends Service {
             model: Contract,
             as: 'contract',
             required: false,
-            attributes: ['addressString']
+            attributes: ['addressString', 'createHeight', 'destructHeight'],
+            include: [
+              {
+                model: EVMReceipt,
+                as: 'createReceipt',
+                required: false,
+                attributes: ['indexInBlock', 'outputIndex']
+              },
+              {
+                model: EVMReceipt,
+                as: 'destructReceipt',
+                required: false,
+                attributes: ['indexInBlock', 'outputIndex']
+              }
+            ]
           }]
         }
       ],
@@ -237,7 +265,21 @@ class TransactionService extends Service {
               model: Contract,
               as: 'contract',
               required: false,
-              attributes: ['address', 'addressString']
+              attributes: ['address', 'addressString', 'createHeight', 'destructHeight'],
+              include: [
+                {
+                  model: EVMReceipt,
+                  as: 'createReceipt',
+                  required: false,
+                  attributes: ['indexInBlock', 'outputIndex']
+                },
+                {
+                  model: EVMReceipt,
+                  as: 'destructReceipt',
+                  required: false,
+                  attributes: ['indexInBlock', 'outputIndex']
+                }
+              ]
             }]
           }],
           order: [['inputIndex', 'ASC']]
@@ -254,39 +296,35 @@ class TransactionService extends Service {
               model: Contract,
               as: 'contract',
               required: false,
-              attributes: ['address', 'addressString']
+              attributes: ['address', 'addressString', 'createHeight', 'destructHeight'],
+              include: [
+                {
+                  model: EVMReceipt,
+                  as: 'createReceipt',
+                  required: false,
+                  attributes: ['indexInBlock', 'outputIndex']
+                },
+                {
+                  model: EVMReceipt,
+                  as: 'destructReceipt',
+                  required: false,
+                  attributes: ['indexInBlock', 'outputIndex']
+                }
+              ]
             }]
           }],
           order: [['outputIndex', 'ASC']]
         })
         for (let id of contractSpendIds) {
           contractSpends.push({
-            inputs: inputs.filter(input => input.transactionId === id).map(input => {
-              let result = {}
-              if (input.address) {
-                if ([RawAddress.CONTRACT, RawAddress.EVM_CONTRACT].includes(input.address.type) && input.address.contract) {
-                  result.address = input.address.contract.address.toString('hex')
-                  result.addressHex = input.address.contract.address
-                } else {
-                  result.address = input.address.string
-                }
-              }
-              result.value = input.value
-              return result
-            }),
-            outputs: outputs.filter(output => output.transactionId === id).map(output => {
-              let result = {}
-              if (output.address) {
-                if ([RawAddress.CONTRACT, RawAddress.EVM_CONTRACT].includes(output.address.type) && output.address.contract) {
-                  result.address = output.address.contract.address.toString('hex')
-                  result.addressHex = output.address.contract.address
-                } else {
-                  result.address = output.address.string
-                }
-              }
-              result.value = output.value
-              return result
-            })
+            inputs: inputs.filter(input => input.transactionId === id).map(input => ({
+              ...this.transformAddress(input.address, transaction),
+              value: input.value
+            })),
+            outputs: outputs.filter(output => output.transactionId === id).map(output => ({
+              ...this.transformAddress(output.address, transaction),
+              value: output.value
+            }))
           })
         }
       }
@@ -297,52 +335,21 @@ class TransactionService extends Service {
       hash: transaction.hash,
       version: transaction.version,
       flag: transaction.flag,
-      inputs: inputs.map((input, index) => {
-        let inputObject = {
-          prevTxId: input.outputTransaction ? input.outputTransaction.id : Buffer.alloc(32),
-          outputIndex: input.outputIndex,
-          scriptSig: input.scriptSig,
-          sequence: input.sequence,
-          witness: witnesses.filter(({inputIndex}) => inputIndex === index).map(({script}) => script),
-          value: input.value,
-          scriptPubKey: input.output?.scriptPubKey
-        }
-        if (input.address) {
-          if ([RawAddress.CONTRACT, RawAddress.EVM_CONTRACT].includes(input.address.type)) {
-            if (input.address.contract) {
-              inputObject.address = input.address.contract.address.toString('hex')
-              inputObject.addressHex = input.address.contract.address
-            } else {
-              let address = RawAddress.fromString(input.address.string, this.app.chain)
-              inputObject.address = address.data.toString('hex')
-              inputObject.addressHex = address.data
-              inputObject.isInvalidContract = true
-            }
-          } else {
-            inputObject.address = input.address.string
-          }
-        }
-        return inputObject
-      }),
+      inputs: inputs.map((input, index) => ({
+        prevTxId: input.outputTransaction ? input.outputTransaction.id : Buffer.alloc(32),
+        outputIndex: input.outputIndex,
+        scriptSig: input.scriptSig,
+        sequence: input.sequence,
+        witness: witnesses.filter(({inputIndex}) => inputIndex === index).map(({script}) => script),
+        value: input.value,
+        scriptPubKey: input.output?.scriptPubKey,
+        ...this.transformAddress(input.address, transaction)
+      })),
       outputs: outputs.map(output => {
         let outputObject = {
           scriptPubKey: output.scriptPubKey,
-          value: output.value
-        }
-        if (output.address) {
-          if ([RawAddress.CONTRACT, RawAddress.EVM_CONTRACT].includes(output.address.type)) {
-            if (output.address.contract) {
-              outputObject.address = output.address.contract.address.toString('hex')
-              outputObject.addressHex = output.address.contract.address
-            } else {
-              let address = RawAddress.fromString(output.address.string, this.app.chain)
-              outputObject.address = address.data.toString('hex')
-              outputObject.addressHex = address.data
-              outputObject.isInvalidContract = true
-            }
-          } else {
-            outputObject.address = output.address.string
-          }
+          value: output.value,
+          ...this.transformAddress(output.address, transaction)
         }
         if (output.inputTransaction) {
           outputObject.spentTxId = output.inputTransaction.id
@@ -550,6 +557,51 @@ class TransactionService extends Service {
     let client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
     let id = await client.sendrawtransaction(data.toString('hex'))
     return Buffer.from(id, 'hex')
+  }
+
+  transformAddress(address, transaction) {
+    const {Address} = this.app.qtuminfo.lib
+    let result = {}
+    if (address) {
+      if ([Address.CONTRACT, Address.EVM_CONTRACT].includes(address.type)) {
+        if (address.contract) {
+          result.address = address.contract.address.toString('hex')
+          result.addressHex = address.contract.address
+          if (transaction.contractSpendSource) {
+            transaction = transaction.contractSpendSource.destTransaction
+          }
+          let {createHeight, createReceipt, destructHeight, destructReceipt} = address.contract
+          if (createHeight > transaction.blockHeight) {
+            result.isInvalidContract = true
+          } else if (createHeight === transaction.blockHeight && createReceipt) {
+            let {indexInBlock, outputIndex} = createReceipt
+            if (indexInBlock > transaction.indexInBlock
+              || indexInBlock === transaction.indexInBlock && transaction.outputIndex != null && outputIndex > transaction.outputIndex) {
+              result.isInvalidContract = true
+            }
+          }
+          if (destructHeight != null) {
+            if (destructHeight < transaction.blockHeight) {
+              result.isInvalidContract = true
+            } else if (destructHeight === transaction.blockHeight && destructReceipt) {
+              let {indexInBlock, outputIndex} = destructReceipt
+              if (indexInBlock < transaction.indexInBlock
+                || indexInBlock === transaction.indexInBlock && transaction.outputIndex != null && outputIndex < transaction.outputIndex) {
+                result.isInvalidContract = true
+              }
+            }
+          }
+        } else {
+          let rawAddress = Address.fromString(address.string, this.app.chain)
+          result.address = rawAddress.data.toString('hex')
+          result.addressHex = rawAddress.data
+          result.isInvalidContract = true
+        }
+      } else {
+        result.address = address.string
+      }
+    }
+    return result
   }
 
   async transformTransaction(transaction) {
