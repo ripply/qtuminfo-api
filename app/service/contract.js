@@ -35,8 +35,8 @@ class ContractService extends Service {
   async getContractSummary(contract) {
     let {
       contractAddress, vm, type,
-      createHeight, createTransactionId, createOutputIndex,
-      destructHeight, destructTransactionId, destructOutputIndex,
+      createHeight, createTransactionId, createOutputIndex, createBy,
+      destructHeight, destructTransactionId, destructOutputIndex, destructBy,
       addressIds
     } = contract
     const {
@@ -83,9 +83,11 @@ class ContractService extends Service {
       createHeight,
       createTransactionId,
       createOutputIndex,
+      createBy,
       destructHeight,
       destructTransactionId,
       destructOutputIndex,
+      destructBy,
       ...type === 'qrc20' ? {
         qrc20: {
           name: qrc20.name,

@@ -28,7 +28,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
         model: EVMReceipt,
         as: 'createReceipt',
         required: false,
-        attributes: ['outputIndex'],
+        attributes: ['outputIndex', 'senderType', 'senderData'],
         include: [{
           model: Transaction,
           as: 'transaction',
@@ -40,7 +40,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
         model: EVMReceipt,
         as: 'destructReceipt',
         required: false,
-        attributes: ['outputIndex'],
+        attributes: ['outputIndex', 'senderType', 'senderData'],
         include: [{
           model: Transaction,
           as: 'transaction',
@@ -56,11 +56,25 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   contract.vm = contractResult.vm
   contract.type = contractResult.type
   contract.createHeight = contractResult.createHeight
-  contract.createTransactionId = contractResult.createReceipt?.transaction.id
-  contract.createOutputIndex = contractResult.createReceipt?.outputIndex
+  if (contractResult.createReceipt) {
+    contract.createTransactionId = contractResult.createReceipt.transaction.id
+    contract.createOutputIndex = contractResult.createReceipt.outputIndex
+    contract.createBy = new RawAddress({
+      type: contractResult.createReceipt.senderType,
+      data: contractResult.createReceipt.senderData,
+      chain
+    })
+  }
   contract.destructHeight = contractResult.destructHeight
-  contract.destructTransactionId = contractResult.destructReceipt?.transaction.id
-  contract.destructOutputIndex = contractResult.destructReceipt?.outputIndex
+  if (contractResult.destructReceipt) {
+    contract.destructTransactionId = contractResult.destructReceipt.transaction.id
+    contract.destructOutputIndex = contractResult.destructReceipt.outputIndex
+    contract.destructBy = new RawAddress({
+      type: contractResult.destructReceipt.senderType,
+      data: contractResult.destructReceipt.senderData,
+      chain
+    })
+  }
 
   let addressList = await Address.findAll({
     where: {
