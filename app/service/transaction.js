@@ -188,26 +188,40 @@ class TransactionService extends Service {
             outputIndex: where(col('evmReceipt.output_index'), '=', col('transaction_output.output_index'))
           },
           required: false,
-          include: [{
-            model: Contract,
-            as: 'contract',
-            required: false,
-            attributes: ['addressString', 'createHeight', 'destructHeight'],
-            include: [
-              {
-                model: EVMReceipt,
-                as: 'createReceipt',
-                required: false,
-                attributes: ['indexInBlock', 'outputIndex']
-              },
-              {
-                model: EVMReceipt,
-                as: 'destructReceipt',
-                required: false,
-                attributes: ['indexInBlock', 'outputIndex']
-              }
-            ]
-          }]
+          include: [
+            {
+              model: Contract,
+              as: 'contract',
+              required: false,
+              attributes: ['addressString', 'createHeight', 'destructHeight'],
+              include: [
+                {
+                  model: EVMReceipt,
+                  as: 'createReceipt',
+                  required: false,
+                  attributes: ['indexInBlock', 'outputIndex']
+                },
+                {
+                  model: EVMReceipt,
+                  as: 'destructReceipt',
+                  required: false,
+                  attributes: ['indexInBlock', 'outputIndex']
+                }
+              ]
+            },
+            {
+              model: Contract,
+              as: 'createdContracts',
+              required: false,
+              attributes: ['address', 'addressString']
+            },
+            {
+              model: Contract,
+              as: 'destructedContracts',
+              required: false,
+              attributes: ['address', 'addressString']
+            }
+          ]
         }
       ],
       order: [['outputIndex', 'ASC']]
@@ -374,7 +388,13 @@ class TransactionService extends Service {
             contractAddress: output.evmReceipt.contractAddress.toString('hex'),
             contractAddressHex: output.evmReceipt.contractAddress,
             excepted: output.evmReceipt.excepted,
-            exceptedMessage: output.evmReceipt.exceptedMessage
+            exceptedMessage: output.evmReceipt.exceptedMessage,
+            createdContracts: output.evmReceipt.createdContracts.map(
+              ({address, addressString}) => ({address: addressString, addressHex: address})
+            ),
+            destructedContracts: output.evmReceipt.destructedContracts.map(
+              ({address, addressString}) => ({address: addressString, addressHex: address})
+            )
           }
           outputObject.evmReceipt.logs = eventLogs.filter(log => log.receiptId === output.evmReceipt._id).map(log => ({
             address: log.address.toString('hex'),
@@ -576,7 +596,7 @@ class TransactionService extends Service {
           } else if (createHeight === transaction.blockHeight && createReceipt) {
             let {indexInBlock, outputIndex} = createReceipt
             if (indexInBlock > transaction.indexInBlock
-              || indexInBlock === transaction.indexInBlock && transaction.outputIndex != null && outputIndex > transaction.outputIndex) {
+              || indexInBlock === transaction.indexInBlock && outputIndex > transaction.outputIndex) {
               result.isInvalidContract = true
             }
           }
@@ -586,7 +606,7 @@ class TransactionService extends Service {
             } else if (destructHeight === transaction.blockHeight && destructReceipt) {
               let {indexInBlock, outputIndex} = destructReceipt
               if (indexInBlock < transaction.indexInBlock
-                || indexInBlock === transaction.indexInBlock && transaction.outputIndex != null && outputIndex < transaction.outputIndex) {
+                || indexInBlock === transaction.indexInBlock && outputIndex < transaction.outputIndex) {
                 result.isInvalidContract = true
               }
             }
@@ -722,7 +742,9 @@ class TransactionService extends Service {
         contractAddress: output.evmReceipt.contractAddressHex.toString('hex'),
         contractAddressHex: output.evmReceipt.contractAddressHex.toString('hex'),
         excepted: output.evmReceipt.excepted,
-        exceptedMessage: output.evmReceipt.exceptedMessage
+        exceptedMessage: output.evmReceipt.exceptedMessage,
+        createdContracts: output.evmReceipt.createdContracts.map(({addressHex}) => addressHex.toString('hex')),
+        destructedContracts: output.evmReceipt.destructedContracts.map(({addressHex}) => addressHex.toString('hex'))
       }
       if ([OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
         let byteCode = scriptPubKey.byteCode
