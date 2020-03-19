@@ -95,6 +95,13 @@ class QRC20Controller extends Controller {
       }))
     }
   }
+
+  async updateTotalSupply() {
+    this.ctx.assert(this.ctx.state.token.type === 'qrc20', 500)
+    const totalSupply = await this.ctx.service.qrc20.updateQRC20TotalSupply(this.ctx.state.token.contractAddress)
+    this.ctx.assert(totalSupply != null, 500)
+    this.ctx.body = totalSupply.toString()
+  }
 }
 
 module.exports = QRC20Controller

@@ -190,6 +190,11 @@ module.exports = app => {
     middleware.contract('token'), paginationMiddleware,
     controller.qrc20.richList
   )
+  router.post(
+    '/qrc20/:token/total-supply',
+    middleware.contract('token'),
+    controller.qrc20.updateTotalSupply
+  )
   router.get(
     '/qrc721',
     paginationMiddleware,

@@ -701,6 +701,20 @@ class QRC20Service extends Service {
       await transaction.rollback()
     }
   }
+
+  async updateQRC20TotalSupply(contractAddress) {
+    const totalSupplyABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'totalSupply')
+    const {Qrc20: QRC20} = this.ctx.model
+    const {executionResult} = await this.ctx.service.contract.callContract(
+      contractAddress.toString('hex'),
+      totalSupplyABI.id.toString('hex')
+    )
+    if (executionResult.excepted === 'None') {
+      const totalSupply = BigInt(`0x${executionResult.output}`)
+      await QRC20.update({totalSupply}, {where: {contractAddress}})
+      return totalSupply
+    }
+  }
 }
 
 module.exports = QRC20Service
