@@ -2,10 +2,9 @@ const {Controller} = require('egg')
 
 class QRC721Controller extends Controller {
   async summary() {
-    const {ctx} = this
-    ctx.assert(ctx.state.token.type === 'qrc721', 404)
-    let summary = await ctx.service.contract.getQRC721Summary(ctx.state.token.contractAddress)
-    ctx.body = {
+    this.ctx.assert(this.ctx.state.token.type === 'qrc721', 404)
+    const summary = await this.ctx.service.contract.getQRC721Summary(this.ctx.state.token.contractAddress)
+    this.ctx.body = {
       address: summary.addressHex.toString('hex'),
       addressHex: summary.addressHex.toString('hex'),
       name: summary.name,
@@ -17,9 +16,8 @@ class QRC721Controller extends Controller {
   }
 
   async list() {
-    const {ctx} = this
-    let {totalCount, tokens} = await ctx.service.qrc721.listQRC721Tokens()
-    ctx.body = {
+    const {totalCount, tokens} = await this.ctx.service.qrc721.listQRC721Tokens()
+    this.ctx.body = {
       totalCount,
       tokens: tokens.map(item => ({
         address: item.addressHex.toString('hex'),
@@ -33,10 +31,9 @@ class QRC721Controller extends Controller {
   }
 
   async transactions() {
-    const {ctx} = this
-    ctx.assert(ctx.state.token.type === 'qrc721', 404)
-    let {totalCount, transactions} = await ctx.service.qrc721.getQRC721TokenTransactions(ctx.state.token.contractAddress)
-    ctx.body = {
+    this.ctx.assert(this.ctx.state.token.type === 'qrc721', 404)
+    const {totalCount, transactions} = await this.ctx.service.qrc721.getQRC721TokenTransactions(this.ctx.state.token.contractAddress)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(transaction => ({
         transactionId: transaction.transactionId.toString('hex'),

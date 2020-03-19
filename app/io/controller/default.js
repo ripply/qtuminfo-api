@@ -3,7 +3,7 @@ const {Controller} = require('egg')
 class DefaultController extends Controller {
   async subscribe() {
     const {ctx} = this
-    let rooms = ctx.args
+    const rooms = ctx.args
     if (rooms.length) {
       ctx.socket.join(...rooms)
     }
@@ -11,7 +11,7 @@ class DefaultController extends Controller {
 
   async unsubscribe() {
     const {ctx} = this
-    let rooms = ctx.args
+    const rooms = ctx.args
     if (rooms.length) {
       ctx.socket.leave(...rooms)
     }

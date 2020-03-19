@@ -1,7 +1,7 @@
 module.exports = app => {
   const {CHAR} = app.Sequelize
 
-  let QRC721Token = app.model.define('qrc721_token', {
+  const QRC721Token = app.model.define('qrc721_token', {
     contractAddress: {
       type: CHAR(20).BINARY,
       primaryKey: true

@@ -6,8 +6,8 @@ class ContractService extends Service {
     const chain = this.app.chain
     const {Contract} = this.ctx.model
 
-    let result = []
-    for (let item of list) {
+    const result = []
+    for (const item of list) {
       let rawAddress
       try {
         rawAddress = Address.fromString(item, chain)
@@ -22,7 +22,7 @@ class ContractService extends Service {
       } else {
         this.ctx.throw(400)
       }
-      let contractResult = await Contract.findOne({
+      const contractResult = await Contract.findOne({
         where: filter,
         attributes: ['address', 'addressString', 'vm', 'type']
       })
@@ -33,7 +33,7 @@ class ContractService extends Service {
   }
 
   async getContractSummary(contract) {
-    let {
+    const {
       contractAddress, vm, type,
       createHeight, createTransactionId, createOutputIndex, createBy,
       destructHeight, destructTransactionId, destructOutputIndex, destructBy,
@@ -44,7 +44,7 @@ class ContractService extends Service {
       Qrc721: QRC721, Qrc721Statistics: QRC721Statistics
     } = this.ctx.model
     const {balance: balanceService, qrc20: qrc20Service, qrc721: qrc721Service} = this.ctx.service
-    let qrc20 = await QRC20.findOne({
+    const qrc20 = await QRC20.findOne({
       where: {contractAddress},
       attributes: ['name', 'symbol'],
       include: [{
@@ -53,7 +53,7 @@ class ContractService extends Service {
         required: true
       }]
     })
-    let qrc721 = await QRC721.findOne({
+    const qrc721 = await QRC721.findOne({
       where: {contractAddress},
       attributes: ['name', 'symbol'],
       include: [{
@@ -62,7 +62,7 @@ class ContractService extends Service {
         required: true
       }]
     })
-    let [
+    const [
       {totalReceived, totalSent},
       unconfirmed,
       qrc20Balances,
@@ -113,9 +113,9 @@ class ContractService extends Service {
   async getContractTransactionCount(contractAddress, addressIds) {
     const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
     const db = this.ctx.model
-    let {sql} = this.ctx.helper
-    let topic = Buffer.concat([Buffer.alloc(12), contractAddress])
-    let [{count}] = await db.query(sql`
+    const {sql} = this.ctx.helper
+    const topic = Buffer.concat([Buffer.alloc(12), contractAddress])
+    const [{count}] = await db.query(sql`
       SELECT COUNT(*) AS count FROM (
         SELECT transaction_id FROM balance_change
         WHERE address_id IN ${addressIds} AND ${this.ctx.service.block.getRawBlockFilter()}
@@ -145,12 +145,12 @@ class ContractService extends Service {
   async getContractTransactions(contractAddress, addressIds) {
     const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
     const db = this.ctx.model
-    let {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
-    let topic = Buffer.concat([Buffer.alloc(12), contractAddress])
-    let totalCount = await this.getContractTransactionCount(contractAddress, addressIds)
-    let transactions = await db.query(sql`
+    const {sql} = this.ctx.helper
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
+    const topic = Buffer.concat([Buffer.alloc(12), contractAddress])
+    const totalCount = await this.getContractTransactionCount(contractAddress, addressIds)
+    const transactions = await db.query(sql`
       SELECT tx.id AS id FROM (
         SELECT block_height, index_in_block, _id FROM (
           SELECT block_height, index_in_block, transaction_id AS _id FROM balance_change
@@ -202,10 +202,10 @@ class ContractService extends Service {
       where, col
     } = this.ctx.model
     const {in: $in} = this.app.Sequelize.Op
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
-    let totalCount = await this.getContractBasicTransactionCount(contractAddress)
-    let receiptIds = (await EVMReceipt.findAll({
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
+    const totalCount = await this.getContractBasicTransactionCount(contractAddress)
+    const receiptIds = (await EVMReceipt.findAll({
       where: {
         contractAddress,
         ...this.ctx.service.block.getBlockFilter()
@@ -215,7 +215,7 @@ class ContractService extends Service {
       limit,
       offset
     })).map(receipt => receipt._id)
-    let receipts = await EVMReceipt.findAll({
+    const receipts = await EVMReceipt.findAll({
       where: {_id: {[$in]: receiptIds}},
       include: [
         {
@@ -260,7 +260,7 @@ class ContractService extends Service {
       ],
       order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order], ['outputIndex', order]]
     })
-    let transactions = receipts.map(receipt => ({
+    const transactions = receipts.map(receipt => ({
       transactionId: receipt.transaction.id,
       outputIndex: receipt.outputIndex,
       ...receipt.header ? {
@@ -288,7 +288,7 @@ class ContractService extends Service {
   }
 
   async callContract(contract, data, sender) {
-    let client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
+    const client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
     return await client.callcontract(
       contract.toString('hex'),
       data.toString('hex'),
@@ -302,16 +302,16 @@ class ContractService extends Service {
     const {Header, Transaction, EvmReceipt: EVMReceipt, EvmReceiptLog: EVMReceiptLog, Contract} = db
     const {in: $in} = this.ctx.app.Sequelize.Op
     const {sql} = this.ctx.helper
-    let {limit, offset} = this.ctx.state.pagination
+    const {limit, offset} = this.ctx.state.pagination
 
-    let blockFilter = this.ctx.service.block.getRawBlockFilter('receipt.block_height')
-    let contractFilter = contract ? sql`log.address = ${contract}` : 'TRUE'
-    let topic1Filter = topic1 ? sql`log.topic1 = ${topic1}` : 'TRUE'
-    let topic2Filter = topic2 ? sql`log.topic2 = ${topic2}` : 'TRUE'
-    let topic3Filter = topic3 ? sql`log.topic3 = ${topic3}` : 'TRUE'
-    let topic4Filter = topic4 ? sql`log.topic4 = ${topic4}` : 'TRUE'
+    const blockFilter = this.ctx.service.block.getRawBlockFilter('receipt.block_height')
+    const contractFilter = contract ? sql`log.address = ${contract}` : 'TRUE'
+    const topic1Filter = topic1 ? sql`log.topic1 = ${topic1}` : 'TRUE'
+    const topic2Filter = topic2 ? sql`log.topic2 = ${topic2}` : 'TRUE'
+    const topic3Filter = topic3 ? sql`log.topic3 = ${topic3}` : 'TRUE'
+    const topic4Filter = topic4 ? sql`log.topic4 = ${topic4}` : 'TRUE'
 
-    let [{count: totalCount}] = await db.query(sql`
+    const [{count: totalCount}] = await db.query(sql`
       SELECT COUNT(DISTINCT(log._id)) AS count from evm_receipt receipt, evm_receipt_log log
       WHERE receipt._id = log.receipt_id AND ${blockFilter} AND ${{raw: contractFilter}}
         AND ${{raw: topic1Filter}} AND ${{raw: topic2Filter}} AND ${{raw: topic3Filter}} AND ${{raw: topic4Filter}}
@@ -320,7 +320,7 @@ class ContractService extends Service {
       return {totalCount, logs: []}
     }
 
-    let ids = (await db.query(sql`
+    const ids = (await db.query(sql`
       SELECT log._id AS _id from evm_receipt receipt, evm_receipt_log log
       WHERE receipt._id = log.receipt_id AND ${blockFilter} AND ${{raw: contractFilter}}
         AND ${{raw: topic1Filter}} AND ${{raw: topic2Filter}} AND ${{raw: topic3Filter}} AND ${{raw: topic4Filter}}
@@ -328,7 +328,7 @@ class ContractService extends Service {
       LIMIT ${offset}, ${limit}
     `, {type: db.QueryTypes.SELECT})).map(log => log._id)
 
-    let logs = await EVMReceiptLog.findAll({
+    const logs = await EVMReceiptLog.findAll({
       where: {_id: {[$in]: ids}},
       attributes: ['topic1', 'topic2', 'topic3', 'topic4', 'data'],
       include: [
@@ -393,7 +393,7 @@ class ContractService extends Service {
     const {EvmReceiptLogTag: EVMReceiptLogTag} = db
     const {sql} = this.ctx.helper
 
-    let logs = await db.query(sql`
+    const logs = await db.query(sql`
       SELECT log._id AS _id, log.topic2 AS topic2, log.topic3 AS topic3, log.data AS data FROM qrc20, evm_receipt_log log
       WHERE qrc20.contract_address = log.address AND log.topic1 = ${TransferABI.id}
         AND log._id > (SELECT MAX(log_id) FROM evm_receipt_log_tag)
@@ -407,8 +407,8 @@ class ContractService extends Service {
   async createSolidityABI(tag, abiList) {
     const {Solidity} = this.app.qtuminfo.lib
     const {EvmFunctionAbi: EVMFunctionABI, EvmEventAbi: EVMEventABI} = this.ctx.model
-    let functionABIs = abiList.filter(abi => abi.type !== 'event').map(abi => new Solidity.MethodABI(abi))
-    let eventABIs = abiList.filter(abi => abi.type === 'event').map(abi => new Solidity.EventABI(abi))
+    const functionABIs = abiList.filter(abi => abi.type !== 'event').map(abi => new Solidity.MethodABI(abi))
+    const eventABIs = abiList.filter(abi => abi.type === 'event').map(abi => new Solidity.EventABI(abi))
     await EVMFunctionABI.bulkCreate(functionABIs.map(abi => ({
       id: abi.id,
       type: abi.type,
@@ -434,16 +434,16 @@ class ContractService extends Service {
     const {Contract} = this.ctx.model
     const {in: $in} = this.app.Sequelize.Op
     const {Address} = this.app.qtuminfo.lib
-    let result = addresses.map(address => Buffer.compare(address, Buffer.alloc(20)) === 0 ? null : address)
+    const result = addresses.map(address => address.compare(Buffer.alloc(20)) === 0 ? null : address)
 
-    let contracts = await Contract.findAll({
-      where: {address: {[$in]: addresses.filter(address => Buffer.compare(address, Buffer.alloc(20)) !== 0)}},
+    const contracts = await Contract.findAll({
+      where: {address: {[$in]: addresses.filter(address => address.compare(Buffer.alloc(20)) !== 0)}},
       attributes: ['address', 'addressString']
     })
-    let mapping = new Map(contracts.map(({address, addressString}) => [address.toString('hex'), addressString]))
+    const mapping = new Map(contracts.map(({address, addressString}) => [address.toString('hex'), addressString]))
     for (let i = 0; i < result.length; ++i) {
       if (result[i]) {
-        let string = mapping.get(result[i].toString('hex'))
+        const string = mapping.get(result[i].toString('hex'))
         if (string) {
           result[i] = {string, hex: result[i]}
         } else {

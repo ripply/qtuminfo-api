@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT, CHAR} = app.Sequelize
 
-  let Transaction = app.model.define('transaction', {
+  const Transaction = app.model.define('transaction', {
     _id: {
       type: BIGINT.UNSIGNED,
       field: '_id',

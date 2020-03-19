@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT} = app.Sequelize
 
-  let GasRefund = app.model.define('gas_refund', {
+  const GasRefund = app.model.define('gas_refund', {
     transactionId: {
       type: BIGINT.UNSIGNED,
       primaryKey: true

@@ -5,7 +5,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   const {Address, Transaction, Contract, EvmReceipt: EVMReceipt} = ctx.model
   const {gte: $gte} = ctx.app.Sequelize.Op
 
-  let contract = {}
+  const contract = {}
   let rawAddress
   try {
     rawAddress = RawAddress.fromString(ctx.params[paramName], chain)
@@ -20,7 +20,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
   } else {
     ctx.throw(400)
   }
-  let contractResult = await Contract.findOne({
+  const contractResult = await Contract.findOne({
     where: filter,
     attributes: ['address', 'addressString', 'vm', 'type', 'createHeight', 'destructHeight'],
     include: [
@@ -76,7 +76,7 @@ module.exports = (paramName = 'contract') => async function contract(ctx, next) 
     })
   }
 
-  let addressList = await Address.findAll({
+  const addressList = await Address.findAll({
     where: {
       type: {[$gte]: Address.parseType('contract')},
       data: contract.contractAddress

@@ -12,8 +12,8 @@ class TransactionService extends Service {
     const {in: $in} = this.app.Sequelize.Op
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
-    let cache = this.ctx.service.cache.getLRUCache('transaction')
-    let transaction = await Transaction.findOne({
+    const cache = this.ctx.service.cache.getLRUCache('transaction')
+    const transaction = await Transaction.findOne({
       where: {id},
       include: [
         {
@@ -40,7 +40,7 @@ class TransactionService extends Service {
       await cache.del(id.toString('hex'))
       return null
     }
-    let cachedTransaction = await cache.get(id.toString('hex'))
+    const cachedTransaction = await cache.get(id.toString('hex'))
     if (cachedTransaction) {
       if (transaction.header) {
         cachedTransaction.blockHash = transaction.header.hash.toString('hex')
@@ -51,13 +51,13 @@ class TransactionService extends Service {
       return cachedTransaction
     }
 
-    let witnesses = await Witness.findAll({
+    const witnesses = await Witness.findAll({
       where: {transactionId: id},
       attributes: ['inputIndex', 'script'],
       order: [['inputIndex', 'ASC'], ['witnessIndex', 'ASC']]
     })
 
-    let inputs = await TransactionInput.findAll({
+    const inputs = await TransactionInput.findAll({
       where: {transactionId: transaction._id},
       include: [
         {
@@ -105,7 +105,7 @@ class TransactionService extends Service {
       ],
       order: [['inputIndex', 'ASC']]
     })
-    let outputs = await TransactionOutput.findAll({
+    const outputs = await TransactionOutput.findAll({
       where: {transactionId: transaction._id},
       include: [
         {
@@ -228,7 +228,7 @@ class TransactionService extends Service {
     })
 
     let eventLogs = []
-    let contractSpends = []
+    const contractSpends = []
 
     if (outputs.some(output => output.evmReceipt)) {
       eventLogs = await EVMReceiptLog.findAll({
@@ -255,7 +255,7 @@ class TransactionService extends Service {
         ],
         order: [['_id', 'ASC']]
       })
-      let contractSpendIds = (await Transaction.findAll({
+      const contractSpendIds = (await Transaction.findAll({
         attributes: ['_id'],
         include: [{
           model: ContractSpend,
@@ -267,7 +267,7 @@ class TransactionService extends Service {
         order: [['blockHeight', 'ASC'], ['indexInBlock', 'ASC']]
       })).map(item => item._id)
       if (contractSpendIds.length) {
-        let inputs = await TransactionInput.findAll({
+        const inputs = await TransactionInput.findAll({
           where: {transactionId: {[$in]: contractSpendIds}},
           attributes: ['transactionId', 'value'],
           include: [{
@@ -298,7 +298,7 @@ class TransactionService extends Service {
           }],
           order: [['inputIndex', 'ASC']]
         })
-        let outputs = await TransactionOutput.findAll({
+        const outputs = await TransactionOutput.findAll({
           where: {transactionId: {[$in]: contractSpendIds}},
           attributes: ['transactionId', 'value'],
           include: [{
@@ -329,7 +329,7 @@ class TransactionService extends Service {
           }],
           order: [['outputIndex', 'ASC']]
         })
-        for (let id of contractSpendIds) {
+        for (const id of contractSpendIds) {
           contractSpends.push({
             inputs: inputs.filter(input => input.transactionId === id).map(input => ({
               ...this.transformAddress(input.address, transaction),
@@ -344,7 +344,7 @@ class TransactionService extends Service {
       }
     }
 
-    let result = await this.transformTransaction({
+    const result = await this.transformTransaction({
       id: transaction.id,
       hash: transaction.hash,
       version: transaction.version,
@@ -360,7 +360,7 @@ class TransactionService extends Service {
         ...this.transformAddress(input.address, transaction)
       })),
       outputs: outputs.map(output => {
-        let outputObject = {
+        const outputObject = {
           scriptPubKey: output.scriptPubKey,
           value: output.value,
           ...this.transformAddress(output.address, transaction)
@@ -439,20 +439,20 @@ class TransactionService extends Service {
     const {Transaction, Witness, TransactionOutput, TransactionInput} = this.ctx.model
     const {Transaction: RawTransaction, Input, Output, OutputScript} = this.app.qtuminfo.lib
 
-    let transaction = await Transaction.findOne({
+    const transaction = await Transaction.findOne({
       where: {id},
       attributes: ['_id', 'version', 'flag', 'lockTime']
     })
     if (!transaction) {
       return null
     }
-    let witnesses = await Witness.findAll({
+    const witnesses = await Witness.findAll({
       where: {transactionId: id},
       attributes: ['inputIndex', 'script'],
       order: [['inputIndex', 'ASC'], ['witnessIndex', 'ASC']]
     })
 
-    let inputs = await TransactionInput.findAll({
+    const inputs = await TransactionInput.findAll({
       where: {transactionId: transaction._id},
       attributes: ['outputIndex', 'scriptSig', 'sequence'],
       include: [{
@@ -463,7 +463,7 @@ class TransactionService extends Service {
       }],
       order: [['inputIndex', 'ASC']]
     })
-    let outputs = await TransactionOutput.findAll({
+    const outputs = await TransactionOutput.findAll({
       where: {transactionId: transaction._id},
       attributes: ['value', 'scriptPubKey'],
       order: [['outputIndex', 'ASC']]
@@ -509,9 +509,9 @@ class TransactionService extends Service {
     const db = this.ctx.model
     const {Block, Transaction} = this.ctx.model
     const {sql} = this.ctx.helper
-    let {limit, offset} = this.ctx.state.pagination
-    let totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
-    let list = await db.query(sql`
+    const {limit, offset} = this.ctx.state.pagination
+    const totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
+    const list = await db.query(sql`
       SELECT tx.id AS id FROM (
         SELECT _id, block_height, index_in_block FROM transaction
         ORDER BY block_height DESC, index_in_block DESC, _id DESC
@@ -525,8 +525,8 @@ class TransactionService extends Service {
 
   async getLatestTransactions(count = 20) {
     const {Block, Transaction} = this.ctx.model
-    let totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
-    let list = await Transaction.findAll({
+    const totalCount = await Block.aggregate('txs', 'SUM') + await Transaction.count({where: {blockHeight: 0xffffffff}})
+    const list = await Transaction.findAll({
       attributes: ['id'],
       order: [['blockHeight', 'DESC'], ['indexInBlock', 'DESC'], ['_id', 'DESC']],
       offset: 0,
@@ -538,7 +538,7 @@ class TransactionService extends Service {
   async getMempoolTransactionAddresses(id) {
     const {Address: RawAddress} = this.app.qtuminfo.lib
     const {Address, Transaction, BalanceChange, EvmReceipt: EVMReceipt} = this.ctx.model
-    let balanceChanges = await BalanceChange.findAll({
+    const balanceChanges = await BalanceChange.findAll({
       attributes: [],
       include: [
         {
@@ -556,7 +556,7 @@ class TransactionService extends Service {
         }
       ]
     })
-    let receipts = await EVMReceipt.findAll({
+    const receipts = await EVMReceipt.findAll({
       attributes: ['senderType', 'senderData'],
       include: [{
         model: Transaction,
@@ -566,22 +566,22 @@ class TransactionService extends Service {
         attributes: []
       }]
     })
-    let addresses = new Set(balanceChanges.map(item => item.address.string))
-    for (let receipt of receipts) {
+    const addresses = new Set(balanceChanges.map(item => item.address.string))
+    for (const receipt of receipts) {
       addresses.add(new RawAddress({type: receipt.senderType, data: receipt.senderData, chain: this.app.chain}).toString())
     }
     return [...addresses]
   }
 
   async sendRawTransaction(data) {
-    let client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
-    let id = await client.sendrawtransaction(data.toString('hex'))
+    const client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
+    const id = await client.sendrawtransaction(data.toString('hex'))
     return Buffer.from(id, 'hex')
   }
 
   transformAddress(address, transaction) {
     const {Address} = this.app.qtuminfo.lib
-    let result = {}
+    const result = {}
     if (address) {
       if ([Address.CONTRACT, Address.EVM_CONTRACT].includes(address.type)) {
         if (address.contract) {
@@ -590,11 +590,11 @@ class TransactionService extends Service {
           if (transaction.contractSpendSource) {
             transaction = transaction.contractSpendSource.destTransaction
           }
-          let {createHeight, createReceipt, destructHeight, destructReceipt} = address.contract
+          const {createHeight, createReceipt, destructHeight, destructReceipt} = address.contract
           if (createHeight > transaction.blockHeight) {
             result.isInvalidContract = true
           } else if (createHeight === transaction.blockHeight && createReceipt) {
-            let {indexInBlock, outputIndex} = createReceipt
+            const {indexInBlock, outputIndex} = createReceipt
             if (indexInBlock > transaction.indexInBlock
               || indexInBlock === transaction.indexInBlock && outputIndex > transaction.outputIndex) {
               result.isInvalidContract = true
@@ -604,7 +604,7 @@ class TransactionService extends Service {
             if (destructHeight < transaction.blockHeight) {
               result.isInvalidContract = true
             } else if (destructHeight === transaction.blockHeight && destructReceipt) {
-              let {indexInBlock, outputIndex} = destructReceipt
+              const {indexInBlock, outputIndex} = destructReceipt
               if (indexInBlock < transaction.indexInBlock
                 || indexInBlock === transaction.indexInBlock && outputIndex < transaction.outputIndex) {
                 result.isInvalidContract = true
@@ -612,7 +612,7 @@ class TransactionService extends Service {
             }
           }
         } else {
-          let rawAddress = Address.fromString(address.string, this.app.chain)
+          const rawAddress = Address.fromString(address.string, this.app.chain)
           result.address = rawAddress.data.toString('hex')
           result.addressHex = rawAddress.data
           result.isInvalidContract = true
@@ -625,21 +625,21 @@ class TransactionService extends Service {
   }
 
   async transformTransaction(transaction) {
-    let confirmations = transaction.block ? this.app.blockchainInfo.tip.height - transaction.block.height + 1 : 0
-    let inputValue = transaction.inputs.map(input => input.value).reduce((x, y) => x + y)
-    let outputValue = transaction.outputs.map(output => output.value).reduce((x, y) => x + y)
-    let refundValue = transaction.outputs
+    const confirmations = transaction.block ? this.app.blockchainInfo.tip.height - transaction.block.height + 1 : 0
+    const inputValue = transaction.inputs.map(input => input.value).reduce((x, y) => x + y)
+    const outputValue = transaction.outputs.map(output => output.value).reduce((x, y) => x + y)
+    const refundValue = transaction.outputs
       .map(output => output.refundValue)
       .filter(Boolean)
       .reduce((x, y) => x + y, 0n)
-    let refundToValue = transaction.outputs
+    const refundToValue = transaction.outputs
       .filter(output => output.isRefund)
       .map(output => output.value)
       .reduce((x, y) => x + y, 0n)
-    let inputs = transaction.inputs.map((input, index) => this.transformInput(input, index, transaction))
-    let outputs = await Promise.all(transaction.outputs.map((output, index) => this.transformOutput(output, index)))
+    const inputs = transaction.inputs.map((input, index) => this.transformInput(input, index, transaction))
+    const outputs = await Promise.all(transaction.outputs.map((output, index) => this.transformOutput(output, index)))
 
-    let [qrc20TokenTransfers, qrc20TokenUnconfirmedTransfers, qrc721TokenTransfers] = await Promise.all([
+    const [qrc20TokenTransfers, qrc20TokenUnconfirmedTransfers, qrc721TokenTransfers] = await Promise.all([
       this.transformQRC20Transfers(transaction.outputs),
       confirmations === 0 ? this.transformQRC20UnconfirmedTransfers(transaction.outputs) : undefined,
       this.transformQRC721Transfers(transaction.outputs)
@@ -687,12 +687,12 @@ class TransactionService extends Service {
 
   transformInput(input, index, transaction) {
     const {InputScript, OutputScript} = this.app.qtuminfo.lib
-    let scriptSig = InputScript.fromBuffer(input.scriptSig, {
+    const scriptSig = InputScript.fromBuffer(input.scriptSig, {
       scriptPubKey: OutputScript.fromBuffer(input.scriptPubKey ?? Buffer.alloc(0)),
       witness: input.witness,
       isCoinbase: isCoinbase(input)
     })
-    let result = {}
+    const result = {}
     if (scriptSig.type === InputScript.COINBASE) {
       result.coinbase = scriptSig.buffer.toString('hex')
     } else {
@@ -717,9 +717,9 @@ class TransactionService extends Service {
     const {OutputScript, Solidity} = this.app.qtuminfo.lib
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
-    let type = scriptPubKey.isEmpty() ? 'empty' : scriptPubKey.type
-    let result = {
+    const scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
+    const type = scriptPubKey.isEmpty() ? 'empty' : scriptPubKey.type
+    const result = {
       value: output.value.toString(),
       address: output.addressHex ? output.addressHex.toString('hex') : output.address,
       addressHex: output.addressHex?.toString('hex'),
@@ -747,9 +747,9 @@ class TransactionService extends Service {
         destructedContracts: output.evmReceipt.destructedContracts.map(({addressHex}) => addressHex.toString('hex'))
       }
       if ([OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
-        let byteCode = scriptPubKey.byteCode
-        if (Buffer.compare(byteCode, Buffer.alloc(1)) === 0) {
-          let abiList = await db.query(sql`
+        const byteCode = scriptPubKey.byteCode
+        if (byteCode.compare(Buffer.alloc(1)) === 0) {
+          const abiList = await db.query(sql`
             SELECT state_mutability, contract_tag FROM evm_function_abi
             WHERE id = ${Buffer.alloc(4)} AND type = 'fallback' AND (
               contract_address = ${output.evmReceipt.contractAddressHex} OR contract_tag IN (
@@ -757,7 +757,7 @@ class TransactionService extends Service {
               )
             )
           `, {type: db.QueryTypes.SELECT})
-          for (let {state_mutability: stateMutability, contract_tag: tag} of abiList) {
+          for (const {state_mutability: stateMutability, contract_tag: tag} of abiList) {
             result.receipt.abi = {
               tag,
               type: 'fallback',
@@ -768,7 +768,7 @@ class TransactionService extends Service {
             break
           }
         } else {
-          let abiList = await db.query(sql`
+          const abiList = await db.query(sql`
             SELECT type, name, inputs, state_mutability, contract_tag FROM evm_function_abi
             WHERE id = ${byteCode.slice(0, 4)} AND (
               contract_address = ${output.evmReceipt.contractAddressHex} OR contract_tag IN (
@@ -776,10 +776,10 @@ class TransactionService extends Service {
               )
             )
           `, {type: db.QueryTypes.SELECT})
-          for (let {type, name, inputs, state_mutability: stateMutability} of abiList) {
-            let abi = new Solidity.MethodABI({type, name, inputs, stateMutability})
+          for (const {type, name, inputs, state_mutability: stateMutability} of abiList) {
+            const abi = new Solidity.MethodABI({type, name, inputs, stateMutability})
             try {
-              let abiResult = abi.decodeInputs(byteCode.slice(4))
+              const abiResult = abi.decodeInputs(byteCode.slice(4))
               result.receipt.abi = {
                 tag: abiList.map(abi => abi.contract_tag).filter(Boolean),
                 type,
@@ -797,14 +797,14 @@ class TransactionService extends Service {
         }
       }
       result.receipt.logs = []
-      for (let {addressHex, topics, data} of output.evmReceipt.logs) {
-        let log = {
+      for (const {addressHex, topics, data} of output.evmReceipt.logs) {
+        const log = {
           address: addressHex.toString('hex'),
           addressHex: addressHex.toString('hex'),
           topics: topics.map(topic => topic.toString('hex')),
           data: data.toString('hex')
         }
-        let abiList = await db.query(sql`
+        const abiList = await db.query(sql`
           SELECT name, inputs, anonymous, contract_tag FROM evm_event_abi
           WHERE (id = ${topics[0] ?? Buffer.alloc(0)} OR anonymous = TRUE) AND (
             contract_address = ${addressHex} OR contract_tag IN (
@@ -812,10 +812,10 @@ class TransactionService extends Service {
             )
           )
         `, {type: db.QueryTypes.SELECT})
-        for (let {name, inputs, anonymous} of abiList) {
-          let abi = new Solidity.EventABI({name, inputs, anonymous})
+        for (const {name, inputs, anonymous} of abiList) {
+          const abi = new Solidity.EventABI({name, inputs, anonymous})
           try {
-            let abiResult = abi.decode(topics, data)
+            const abiResult = abi.decode(topics, data)
             log.abi = {
               tag: abiList.map(abi => abi.contract_tag).filter(Boolean),
               name,
@@ -838,12 +838,12 @@ class TransactionService extends Service {
 
   async transformQRC20Transfers(outputs) {
     const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
-    let result = []
-    for (let output of outputs) {
+    const result = []
+    for (const output of outputs) {
       if (output.evmReceipt) {
-        for (let {addressHex, topics, data, qrc20} of output.evmReceipt.logs) {
-          if (qrc20 && topics.length === 3 && Buffer.compare(topics[0], TransferABI.id) === 0 && data.length === 32) {
-            let [from, to] = await this.ctx.service.contract.transformHexAddresses([topics[1].slice(12), topics[2].slice(12)])
+        for (const {addressHex, topics, data, qrc20} of output.evmReceipt.logs) {
+          if (qrc20 && topics.length === 3 && topics[0].compare(TransferABI.id) === 0 && data.length === 32) {
+            const [from, to] = await this.ctx.service.contract.transformHexAddresses([topics[1].slice(12), topics[2].slice(12)])
             result.push({
               address: addressHex.toString('hex'),
               addressHex: addressHex.toString('hex'),
@@ -867,30 +867,30 @@ class TransactionService extends Service {
     const {OutputScript, Solidity} = this.app.qtuminfo.lib
     const transferABI = Solidity.qrc20ABIs.find(abi => abi.name === 'transfer')
     const {Qrc20: QRC20} = this.ctx.model
-    let result = []
-    for (let output of outputs) {
+    const result = []
+    for (const output of outputs) {
       if (output.evmReceipt) {
-        let qrc20 = await QRC20.findOne({
+        const qrc20 = await QRC20.findOne({
           where: {contractAddress: output.addressHex},
           attributes: ['name', 'symbol', 'decimals']
         })
         if (!qrc20) {
           continue
         }
-        let scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
+        const scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
         if (![OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
           continue
         }
-        let byteCode = scriptPubKey.byteCode
+        const byteCode = scriptPubKey.byteCode
         if (byteCode.length !== 68
-          || Buffer.compare(byteCode.slice(0, 4), transferABI.id) !== 0
-          || Buffer.compare(byteCode.slice(4, 16), Buffer.alloc(12)) !== 0
+          || byteCode.slice(0, 4).compare(transferABI.id) !== 0
+          || byteCode.slice(4, 16).compare(Buffer.alloc(12)) !== 0
         ) {
           continue
         }
-        let from = output.evmReceipt.sender
-        let [to] = await this.ctx.service.contract.transformHexAddresses([byteCode.slice(16, 36)])
-        let value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
+        const from = output.evmReceipt.sender
+        const [to] = await this.ctx.service.contract.transformHexAddresses([byteCode.slice(16, 36)])
+        const value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
         result.push({
           address: output.addressHex.toString('hex'),
           addressHex: output.addressHex.toString('hex'),
@@ -910,12 +910,12 @@ class TransactionService extends Service {
 
   async transformQRC721Transfers(outputs) {
     const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
-    let result = []
-    for (let output of outputs) {
+    const result = []
+    for (const output of outputs) {
       if (output.evmReceipt) {
-        for (let {addressHex, topics, qrc721} of output.evmReceipt.logs) {
-          if (qrc721 && topics.length === 4 && Buffer.compare(topics[0], TransferABI.id) === 0) {
-            let [from, to] = await this.ctx.service.contract.transformHexAddresses([topics[1].slice(12), topics[2].slice(12)])
+        for (const {addressHex, topics, qrc721} of output.evmReceipt.logs) {
+          if (qrc721 && topics.length === 4 && topics[0].compare(TransferABI.id) === 0) {
+            const [from, to] = await this.ctx.service.contract.transformHexAddresses([topics[1].slice(12), topics[2].slice(12)])
             result.push({
               address: addressHex.toString('hex'),
               addressHex: addressHex.toString('hex'),
@@ -937,7 +937,7 @@ class TransactionService extends Service {
   async getBasicTransaction(transactionId, addressIds) {
     const {Header, Transaction, TransactionOutput, TransactionInput, GasRefund, EvmReceipt: EVMReceipt, where, col} = this.ctx.model
 
-    let transaction = await Transaction.findOne({
+    const transaction = await Transaction.findOne({
       where: {_id: transactionId},
       attributes: ['id', 'blockHeight', 'indexInBlock'],
       include: [{
@@ -951,11 +951,11 @@ class TransactionService extends Service {
       return null
     }
 
-    let inputs = await TransactionInput.findAll({
+    const inputs = await TransactionInput.findAll({
       where: {transactionId},
       attributes: ['value', 'addressId']
     })
-    let outputs = await TransactionOutput.findAll({
+    const outputs = await TransactionOutput.findAll({
       where: {transactionId},
       attributes: ['value', 'addressId'],
       include: [
@@ -1002,17 +1002,17 @@ class TransactionService extends Service {
       ]
     })
 
-    let inputValue = inputs.map(input => input.value).reduce((x, y) => x + y)
-    let outputValue = outputs.map(output => output.value).reduce((x, y) => x + y)
-    let refundValue = outputs
+    const inputValue = inputs.map(input => input.value).reduce((x, y) => x + y)
+    const outputValue = outputs.map(output => output.value).reduce((x, y) => x + y)
+    const refundValue = outputs
       .filter(output => output.refund)
       .map(output => output.refund.refundTo.value)
       .reduce((x, y) => x + y, 0n)
-    let refundToValue = outputs
+    const refundToValue = outputs
       .filter(output => output.refundTo)
       .map(output => output.value)
       .reduce((x, y) => x + y, 0n)
-    let amount = [
+    const amount = [
       ...outputs.filter(output => addressIds.includes(output.addressId)).map(output => output.value),
       ...inputs.filter(input => addressIds.includes(input.addressId)).map(input => -input.value)
     ].reduce((x, y) => x + y, 0n)
@@ -1056,7 +1056,7 @@ class TransactionService extends Service {
       EvmReceipt: EVMReceipt, EvmReceiptLog: EVMReceiptLog, Contract,
       where, col
     } = this.ctx.model
-    let receipt = await EVMReceipt.findOne({
+    const receipt = await EVMReceipt.findOne({
       where: {_id: receiptId},
       include: [
         {
@@ -1103,7 +1103,7 @@ class TransactionService extends Service {
     if (!receipt) {
       return null
     }
-    let logs = await EVMReceiptLog.findAll({
+    const logs = await EVMReceiptLog.findAll({
       where: {receiptId},
       include: [{
         model: Contract,
@@ -1121,7 +1121,7 @@ class TransactionService extends Service {
       outputAddress = receipt.output.address.contract.address.toString('hex')
       outputAddressHex = receipt.output.address.contract.address
     } else {
-      let address = RawAddress.fromString(receipt.output.address.string, this.app.chain)
+      const address = RawAddress.fromString(receipt.output.address.string, this.app.chain)
       outputAddress = address.data.toString('hex')
       outputAddressHex = address.data
       isInvalidContract = true
@@ -1160,7 +1160,7 @@ class TransactionService extends Service {
   }
 
   transformTopics(log) {
-    let result = []
+    const result = []
     if (log.topic1) {
       result.push(log.topic1)
     }
@@ -1177,10 +1177,10 @@ class TransactionService extends Service {
   }
 
   decodeSolidityObject(type, parameter) {
-    let result = {}
-    for (let key of Object.keys(type)) {
-      let subType = type[key]
-      let subParam = parameter[key]
+    const result = {}
+    for (const key of Object.keys(type)) {
+      const subType = type[key]
+      const subParam = parameter[key]
       if (typeof subType === 'object') {
         result[key] = this.decodeSolidityObject(subType, subParam)
       } else {
@@ -1192,11 +1192,11 @@ class TransactionService extends Service {
 
   decodeSolitityParameter(type, parameter) {
     if (typeof type === 'object') {
-      let key = Object.keys(type)[0]
+      const key = Object.keys(type)[0]
       return this.decodeSolidityObject(key, parameter)
     } else if (Array.isArray(parameter)) {
-      let index = type.indexOf('[')
-      let itemType = index < 0 ? type : type.slice(0, index)
+      const index = type.indexOf('[')
+      const itemType = index < 0 ? type : type.slice(0, index)
       return parameter.map(param => this.decodeSolitityParameter(itemType, param))
     } else if (Buffer.isBuffer(parameter)) {
       return parameter.toString('hex')
@@ -1209,11 +1209,11 @@ class TransactionService extends Service {
 }
 
 function isCoinbase(input) {
-  return Buffer.compare(input.prevTxId, Buffer.alloc(32)) === 0 && input.outputIndex === 0xffffffff
+  return input.prevTxId.compare(Buffer.alloc(32)) === 0 && input.outputIndex === 0xffffffff
 }
 
 function isCoinstake(transaction) {
-  return transaction.inputs.length > 0 && Buffer.compare(transaction.inputs[0].prevTxId, Buffer.alloc(32)) !== 0
+  return transaction.inputs.length > 0 && transaction.inputs[0].prevTxId.compare(Buffer.alloc(32)) !== 0
     && transaction.outputs.length >= 2 && transaction.outputs[0].value === 0n && transaction.outputs[0].scriptPubKey.length === 0
 }
 

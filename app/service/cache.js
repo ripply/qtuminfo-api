@@ -3,7 +3,7 @@ const {Service} = require('egg')
 
 class CacheService extends Service {
   async getCache(key) {
-    let result = await this.app.redis.hget(this.app.name, key)
+    const result = await this.app.redis.hget(this.app.name, key)
     if (result == null) {
       return result
     } else {

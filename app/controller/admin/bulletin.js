@@ -8,27 +8,27 @@ class BulletinController extends Controller {
 
   async create() {
     const {ctx} = this
-    let {locale, title, url, priority, translations} = ctx.request.body
+    const {locale, title, url, priority, translations} = ctx.request.body
     ctx.body = await ctx.service.admin.bulletin.createBulletin({locale, title, url, priority, translations})
   }
 
   async edit() {
     const {ctx} = this
-    let {id} = ctx.params
-    let {locale, title, url, priority, translations} = ctx.request.body
+    const {id} = ctx.params
+    const {locale, title, url, priority, translations} = ctx.request.body
     ctx.body = await ctx.service.admin.bulletin.updateBulletin({id, locale, title, url, priority, translations})
   }
 
   async delete() {
     const {ctx} = this
-    let {id} = ctx.params
+    const {id} = ctx.params
     await ctx.service.admin.bulletin.removeBulletin(id)
     ctx.body = null
   }
 
   async setPriority() {
     const {ctx} = this
-    let mapping = ctx.request.body
+    const mapping = ctx.request.body
     ctx.body = await ctx.service.admin.bulletin.setPriority(mapping)
   }
 }

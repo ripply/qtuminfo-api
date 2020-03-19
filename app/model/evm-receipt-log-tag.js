@@ -1,7 +1,7 @@
 module.exports = app => {
   const {BIGINT, STRING} = app.Sequelize
 
-  let EVMReceiptLogTag = app.model.define('evm_receipt_log_tag', {
+  const EVMReceiptLogTag = app.model.define('evm_receipt_log_tag', {
     tag: {
       type: STRING(32),
       primaryKey: true

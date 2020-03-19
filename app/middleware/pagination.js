@@ -2,7 +2,7 @@ module.exports = ({defaultPageSize = 100} = {}) => async function pagination(ctx
   if (!['GET', 'POST'].includes(ctx.method)) {
     return await next()
   }
-  let object = {GET: ctx.query, POST: ctx.request.body}[ctx.method]
+  const object = {GET: ctx.query, POST: ctx.request.body}[ctx.method]
   let limit = defaultPageSize
   let offset = 0
   let reversed
@@ -11,20 +11,20 @@ module.exports = ({defaultPageSize = 100} = {}) => async function pagination(ctx
     offset = Number.parseInt(object.offset)
   }
   if ('pageSize' in object && 'pageIndex' in object) {
-    let pageSize = Number.parseInt(object.pageSize)
-    let pageIndex = Number.parseInt(object.pageIndex)
+    const pageSize = Number.parseInt(object.pageSize)
+    const pageIndex = Number.parseInt(object.pageIndex)
     limit = pageSize
     offset = pageSize * pageIndex
   }
   if ('pageSize' in object && 'page' in object) {
-    let pageSize = Number.parseInt(object.pageSize)
-    let pageIndex = Number.parseInt(object.page)
+    const pageSize = Number.parseInt(object.pageSize)
+    const pageIndex = Number.parseInt(object.page)
     limit = pageSize
     offset = pageSize * pageIndex
   }
   if ('from' in object && 'to' in object) {
-    let from = Number.parseInt(object.from)
-    let to = Number.parseInt(object.to)
+    const from = Number.parseInt(object.from)
+    const to = Number.parseInt(object.to)
     limit = to - from + 1
     offset = from
   }

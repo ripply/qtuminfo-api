@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT} = app.Sequelize
 
-  let BalanceChange = app.model.define('balance_change', {
+  const BalanceChange = app.model.define('balance_change', {
     transactionId: {
       type: BIGINT.UNSIGNED,
       primaryKey: true
@@ -15,7 +15,7 @@ module.exports = app => {
     value: {
       type: BIGINT,
       get() {
-        let value = this.getDataValue('value')
+        const value = this.getDataValue('value')
         return value == null ? null : BigInt(value)
       },
       set(value) {

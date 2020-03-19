@@ -1,7 +1,7 @@
 module.exports = app => {
   const {BIGINT} = app.Sequelize
 
-  let ContractSpend = app.model.define('contract_spend', {
+  const ContractSpend = app.model.define('contract_spend', {
     sourceId: {
       type: BIGINT.UNSIGNED,
       primaryKey: true

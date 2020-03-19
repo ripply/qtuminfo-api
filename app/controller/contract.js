@@ -2,9 +2,8 @@ const {Controller} = require('egg')
 
 class ContractController extends Controller {
   async summary() {
-    const {ctx} = this
-    let summary = await ctx.service.contract.getContractSummary(ctx.state.contract)
-    ctx.body = {
+    const summary = await this.ctx.service.contract.getContractSummary(this.ctx.state.contract)
+    this.ctx.body = {
       address: summary.addressHex.toString('hex'),
       addressHex: summary.addressHex.toString('hex'),
       vm: summary.vm,
@@ -53,20 +52,18 @@ class ContractController extends Controller {
   }
 
   async transactions() {
-    let {ctx} = this
-    let {totalCount, transactions} = await ctx.service.contract.getContractTransactions(
-      ctx.state.contract.contractAddress, ctx.state.contract.addressIds
+    const {totalCount, transactions} = await this.ctx.service.contract.getContractTransactions(
+      this.ctx.state.contract.contractAddress, this.ctx.state.contract.addressIds
     )
-    ctx.body = {
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(id => id.toString('hex'))
     }
   }
 
   async basicTransactions() {
-    let {ctx} = this
-    let {totalCount, transactions} = await ctx.service.contract.getContractBasicTransactions(ctx.state.contract.contractAddress)
-    ctx.body = {
+    const {totalCount, transactions} = await this.ctx.service.contract.getContractBasicTransactions(this.ctx.state.contract.contractAddress)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(transaction => ({
         transactionId: transaction.transactionId.toString('hex'),
@@ -97,9 +94,8 @@ class ContractController extends Controller {
   }
 
   async balanceHistory() {
-    let {ctx} = this
-    let {totalCount, transactions} = await ctx.service.balance.getBalanceHistory(ctx.state.contract.addressIds, {nonZero: true})
-    ctx.body = {
+    const {totalCount, transactions} = await this.ctx.service.balance.getBalanceHistory(this.ctx.state.contract.addressIds, {nonZero: true})
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(tx => ({
         id: tx.id.toString('hex'),
@@ -113,21 +109,20 @@ class ContractController extends Controller {
   }
 
   async qrc20BalanceHistory() {
-    let {ctx} = this
     let tokenAddress = null
-    if (ctx.state.token) {
-      if (ctx.state.token.type === 'qrc20') {
-        tokenAddress = ctx.state.token.contractAddress
+    if (this.ctx.state.token) {
+      if (this.ctx.state.token.type === 'qrc20') {
+        tokenAddress = this.ctx.state.token.contractAddress
       } else {
-        ctx.body = {
+        this.ctx.body = {
           totalCount: 0,
           transactions: []
         }
         return
       }
     }
-    let {totalCount, transactions} = await ctx.service.qrc20.getQRC20BalanceHistory([ctx.state.contract.contractAddress], tokenAddress)
-    ctx.body = {
+    const {totalCount, transactions} = await this.ctx.service.qrc20.getQRC20BalanceHistory([this.ctx.state.contract.contractAddress], tokenAddress)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(tx => ({
         id: tx.id.toString('hex'),
@@ -149,62 +144,60 @@ class ContractController extends Controller {
 
   async callContract() {
     const {Address} = this.app.qtuminfo.lib
-    let {ctx} = this
-    let {data, sender} = ctx.query
-    ctx.assert(ctx.state.contract.vm === 'evm', 400)
-    ctx.assert(/^([0-9a-f]{2})+$/i.test(data), 400)
+    let {data, sender} = this.ctx.query
+    this.ctx.assert(this.ctx.state.contract.vm === 'evm', 400)
+    this.ctx.assert(/^([0-9a-f]{2})+$/i.test(data), 400)
     if (sender != null) {
       try {
-        let address = Address.fromString(sender, this.app.chain)
+        const address = Address.fromString(sender, this.app.chain)
         if ([Address.PAY_TO_PUBLIC_KEY_HASH, Address.CONTRACT, Address.EVM_CONTRACT].includes(address.type)) {
           sender = address.data
         } else {
-          ctx.throw(400)
+          this.ctx.throw(400)
         }
       } catch (err) {
-        ctx.throw(400)
+        this.ctx.throw(400)
       }
     }
-    ctx.body = await ctx.service.contract.callContract(ctx.state.contract.contractAddress, data, sender)
+    this.ctx.body = await this.ctx.service.contract.callContract(this.ctx.state.contract.contractAddress, data, sender)
   }
 
   async searchLogs() {
-    let {ctx} = this
-    let {contract, topic1, topic2, topic3, topic4} = this.ctx.query
+    let {contract, topic1, topic2, topic3, topic4} = this.this.ctx.query
     if (contract != null) {
-      contract = (await ctx.service.contract.getContractAddresses([contract]))[0]
+      contract = (await this.ctx.service.contract.getContractAddresses([contract]))[0]
     }
     if (topic1 != null) {
       if (/^[0-9a-f]{64}$/i.test(topic1)) {
         topic1 = Buffer.from(topic1, 'hex')
       } else {
-        ctx.throw(400)
+        this.ctx.throw(400)
       }
     }
     if (topic2 != null) {
       if (/^[0-9a-f]{64}$/i.test(topic2)) {
         topic2 = Buffer.from(topic2, 'hex')
       } else {
-        ctx.throw(400)
+        this.ctx.throw(400)
       }
     }
     if (topic3 != null) {
       if (/^[0-9a-f]{64}$/i.test(topic3)) {
         topic3 = Buffer.from(topic3, 'hex')
       } else {
-        ctx.throw(400)
+        this.ctx.throw(400)
       }
     }
     if (topic4 != null) {
       if (/^[0-9a-f]{64}$/i.test(topic4)) {
         topic4 = Buffer.from(topic4, 'hex')
       } else {
-        ctx.throw(400)
+        this.ctx.throw(400)
       }
     }
 
-    let {totalCount, logs} = await ctx.service.contract.searchLogs({contract, topic1, topic2, topic3, topic4})
-    ctx.body = {
+    const {totalCount, logs} = await this.ctx.service.contract.searchLogs({contract, topic1, topic2, topic3, topic4})
+    this.ctx.body = {
       totalCount,
       logs: logs.map(log => ({
         transactionId: log.transactionId.toString('hex'),
@@ -224,10 +217,9 @@ class ContractController extends Controller {
   }
 
   async createSolidityABI() {
-    const {ctx} = this
-    let {tag, abiList} = ctx.request.body
-    await ctx.service.contract.createSolidityABI(tag, abiList)
-    ctx.body = null
+    const {tag, abiList} = this.ctx.request.body
+    await this.ctx.service.contract.createSolidityABI(tag, abiList)
+    this.ctx.body = null
   }
 }
 

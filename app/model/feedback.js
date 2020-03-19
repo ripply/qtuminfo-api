@@ -3,7 +3,7 @@ const Sequelize = require('sequelize')
 module.exports = app => {
   const {INTEGER, BOOLEAN, STRING, TEXT, DATE} = app.Sequelize
 
-  let Feedback = app.model.define('feedback', {
+  const Feedback = app.model.define('feedback', {
     _id: {
       type: INTEGER.UNSIGNED,
       field: '_id',

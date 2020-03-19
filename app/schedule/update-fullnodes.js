@@ -5,7 +5,7 @@ module.exports = app => ({
     disable: !app.config.enableFullnodes
   },
   async task(ctx) {
-    let fullNodes = await ctx.service.misc.getFullNodes()
+    const fullNodes = await ctx.service.misc.getFullNodes()
     await ctx.service.cache.setCache('fullnodes', fullNodes)
     app.io.of('/').to('blockchain')
       .emit('fullnodes', fullNodes)

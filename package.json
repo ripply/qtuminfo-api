@@ -11,20 +11,20 @@
     "egg": "^2.26.0",
     "egg-cors": "^2.2.3",
     "egg-redis": "^2.4.0",
-    "egg-scripts": "^2.12.0",
+    "egg-scripts": "^2.13.0",
     "egg-sequelize": "^5.2.1",
     "egg-session-redis": "^2.1.0",
     "egg-socket.io": "^4.1.5",
-    "ioredis": "^4.14.1",
+    "ioredis": "^4.16.0",
     "koa-ratelimit": "^4.2.1",
     "mysql2": "^2.1.0",
-    "nodemailer": "^6.4.2",
+    "nodemailer": "^6.4.5",
     "redis-lru": "^0.6.0",
     "socket.io-client": "^2.3.0",
     "svg-captcha": "^1.4.0"
   },
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
+    "babel-eslint": "^10.1.0",
     "egg-bin": "^4.14.1",
     "eslint": "^6.8.0"
   }

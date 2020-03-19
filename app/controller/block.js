@@ -2,19 +2,18 @@ const {Controller} = require('egg')
 
 class BlockController extends Controller {
   async block() {
-    const {ctx} = this
-    let arg = ctx.params.block
-    ctx.assert(arg, 404)
+    let arg = this.ctx.params.block
+    this.ctx.assert(arg, 404)
     if (/^(0|[1-9]\d{0,9})$/.test(arg)) {
       arg = Number.parseInt(arg)
     } else if (/^[0-9a-f]{64}$/i.test(arg)) {
       arg = Buffer.from(arg, 'hex')
     } else {
-      ctx.throw(400)
+      this.ctx.throw(400)
     }
-    let block = await ctx.service.block.getBlock(arg)
-    ctx.assert(block, 404)
-    ctx.body = {
+    const block = await this.ctx.service.block.getBlock(arg)
+    this.ctx.assert(block, 404)
+    this.ctx.body = {
       hash: block.hash.toString('hex'),
       height: block.height,
       version: block.version,
@@ -45,35 +44,33 @@ class BlockController extends Controller {
   }
 
   async rawBlock() {
-    const {ctx} = this
-    let arg = ctx.params.block
-    ctx.assert(arg, 404)
+    let arg = this.ctx.params.block
+    this.ctx.assert(arg, 404)
     if (/^(0|[1-9]\d{0,9})$/.test(arg)) {
       arg = Number.parseInt(arg)
     } else if (/^[0-9a-f]{64}$/i.test(arg)) {
       arg = Buffer.from(arg, 'hex')
     } else {
-      ctx.throw(400)
+      this.ctx.throw(400)
     }
-    let block = await ctx.service.block.getRawBlock(arg)
-    ctx.assert(block, 404)
-    ctx.body = block.toBuffer().toString('hex')
+    const block = await this.ctx.service.block.getRawBlock(arg)
+    this.ctx.assert(block, 404)
+    this.ctx.body = block.toBuffer().toString('hex')
   }
 
   async list() {
-    const {ctx} = this
-    let date = ctx.query.date
+    let date = this.ctx.query.date
     if (!date) {
-      let d = new Date()
-      let yyyy = d.getUTCFullYear().toString()
-      let mm = (d.getUTCMonth() + 1).toString()
-      let dd = d.getUTCDate().toString()
+      const d = new Date()
+      const yyyy = d.getUTCFullYear().toString()
+      const mm = (d.getUTCMonth() + 1).toString()
+      const dd = d.getUTCDate().toString()
       date = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
     }
-    let min = Math.floor(Date.parse(date) / 1000)
-    let max = min + 24 * 60 * 60
-    let {blocks} = await ctx.service.block.listBlocks({min, max})
-    ctx.body = blocks.map(block => ({
+    const min = Math.floor(Date.parse(date) / 1000)
+    const max = min + 24 * 60 * 60
+    const {blocks} = await this.ctx.service.block.listBlocks({min, max})
+    this.ctx.body = blocks.map(block => ({
       hash: block.hash.toString('hex'),
       height: block.height,
       timestamp: block.timestamp,
@@ -86,16 +83,15 @@ class BlockController extends Controller {
   }
 
   async blockList() {
-    const {ctx} = this
     let dateFilter = null
-    let date = ctx.query.date
+    const date = this.ctx.query.date
     if (date) {
-      let min = Math.floor(Date.parse(date) / 1000)
-      let max = min + 24 * 60 * 60
+      const min = Math.floor(Date.parse(date) / 1000)
+      const max = min + 24 * 60 * 60
       dateFilter = {min, max}
     }
-    let result = await ctx.service.block.listBlocks(dateFilter)
-    ctx.body = {
+    const result = await this.ctx.service.block.listBlocks(dateFilter)
+    this.ctx.body = {
       totalCount: result.totalCount,
       blocks: result.blocks.map(block => ({
         hash: block.hash.toString('hex'),
@@ -111,10 +107,9 @@ class BlockController extends Controller {
   }
 
   async recent() {
-    const {ctx} = this
-    let count = Number.parseInt(ctx.query.count ?? 10)
-    let blocks = await ctx.service.block.getRecentBlocks(count)
-    ctx.body = blocks.map(block => ({
+    const count = Number.parseInt(this.ctx.query.count ?? 10)
+    const blocks = await this.ctx.service.block.getRecentBlocks(count)
+    this.ctx.body = blocks.map(block => ({
       hash: block.hash.toString('hex'),
       height: block.height,
       timestamp: block.timestamp,

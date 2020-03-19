@@ -6,8 +6,8 @@ class AddressService extends Service {
     const {Block} = this.ctx.model
     const {balance: balanceService, qrc20: qrc20Service, qrc721: qrc721Service} = this.ctx.service
     const {in: $in, gt: $gt} = this.app.Sequelize.Op
-    let hexAddresses = rawAddresses.filter(address => address.type === Address.PAY_TO_PUBLIC_KEY_HASH).map(address => address.data)
-    let [
+    const hexAddresses = rawAddresses.filter(address => address.type === Address.PAY_TO_PUBLIC_KEY_HASH).map(address => address.data)
+    const [
       {totalReceived, totalSent},
       unconfirmed,
       staking,
@@ -49,10 +49,10 @@ class AddressService extends Service {
     const db = this.ctx.model
     const {Address} = db
     const {sql} = this.ctx.helper
-    let topics = rawAddresses
+    const topics = rawAddresses
       .filter(address => address.type === RawAddress.PAY_TO_PUBLIC_KEY_HASH)
       .map(address => Buffer.concat([Buffer.alloc(12), address.data]))
-    let [{count}] = await db.query(sql`
+    const [{count}] = await db.query(sql`
       SELECT COUNT(*) AS count FROM (
         SELECT transaction_id FROM balance_change
         WHERE address_id IN ${addressIds} AND ${this.ctx.service.block.getRawBlockFilter()}
@@ -82,13 +82,13 @@ class AddressService extends Service {
     const db = this.ctx.model
     const {Address} = db
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
-    let topics = rawAddresses
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
+    const topics = rawAddresses
       .filter(address => address.type === RawAddress.PAY_TO_PUBLIC_KEY_HASH)
       .map(address => Buffer.concat([Buffer.alloc(12), address.data]))
-    let totalCount = await this.getAddressTransactionCount(addressIds, rawAddresses)
-    let transactions = (await db.query(sql`
+    const totalCount = await this.getAddressTransactionCount(addressIds, rawAddresses)
+    const transactions = (await db.query(sql`
       SELECT tx.id AS id FROM (
         SELECT block_height, index_in_block, _id FROM (
           SELECT block_height, index_in_block, transaction_id AS _id FROM balance_change
@@ -136,9 +136,9 @@ class AddressService extends Service {
   async getAddressBasicTransactions(addressIds) {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
-    let totalCount = await this.getAddressBasicTransactionCount(addressIds)
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
+    const totalCount = await this.getAddressBasicTransactionCount(addressIds)
     let transactionIds = []
     if (addressIds.length === 1) {
       transactionIds = (await db.query(sql`
@@ -161,8 +161,8 @@ class AddressService extends Service {
       `, {type: db.QueryTypes.SELECT})).map(({_id}) => _id)
     }
 
-    let transactions = await Promise.all(transactionIds.map(async transactionId => {
-      let transaction = await this.ctx.service.transaction.getBasicTransaction(transactionId, addressIds)
+    const transactions = await Promise.all(transactionIds.map(async transactionId => {
+      const transaction = await this.ctx.service.transaction.getBasicTransaction(transactionId, addressIds)
       return Object.assign(transaction, {
         confirmations: transaction.blockHeight == null ? 0 : this.app.blockchainInfo.tip.height - transaction.blockHeight + 1
       })
@@ -178,7 +178,7 @@ class AddressService extends Service {
     if (contract) {
       contractFilter = sql`contract_address = ${contract.contractAddress}`
     }
-    let [{count}] = await db.query(sql`
+    const [{count}] = await db.query(sql`
       SELECT COUNT(DISTINCT(_id)) AS count FROM evm_receipt
       WHERE (sender_type, sender_data) IN ${rawAddresses.map(address => [Address.parseType(address.type), address.data])}
         AND ${this.ctx.service.block.getRawBlockFilter()} AND ${{raw: contractFilter}}
@@ -191,22 +191,22 @@ class AddressService extends Service {
     const db = this.ctx.model
     const {Address} = db
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
     let contractFilter = 'TRUE'
     if (contract) {
       contractFilter = sql`contract_address = ${contract.contractAddress}`
     }
-    let totalCount = await this.getAddressContractTransactionCount(rawAddresses, contract)
-    let receiptIds = (await db.query(sql`
+    const totalCount = await this.getAddressContractTransactionCount(rawAddresses, contract)
+    const receiptIds = (await db.query(sql`
       SELECT _id FROM evm_receipt
       WHERE (sender_type, sender_data) IN ${rawAddresses.map(address => [Address.parseType(address.type), address.data])}
         AND ${this.ctx.service.block.getRawBlockFilter()} AND ${{raw: contractFilter}}
       ORDER BY block_height ${{raw: order}}, index_in_block ${{raw: order}}, transaction_id ${{raw: order}}, output_index ${{raw: order}}
       LIMIT ${offset}, ${limit}
     `, {type: db.QueryTypes.SELECT})).map(({_id}) => _id)
-    let transactions = await Promise.all(receiptIds.map(async receiptId => {
-      let transaction = await this.ctx.service.transaction.getContractTransaction(receiptId)
+    const transactions = await Promise.all(receiptIds.map(async receiptId => {
+      const transaction = await this.ctx.service.transaction.getContractTransaction(receiptId)
       return Object.assign(transaction, {
         confirmations: transaction.blockHeight == null ? 0 : this.app.blockchainInfo.tip.height - transaction.blockHeight + 1
       })
@@ -219,7 +219,7 @@ class AddressService extends Service {
     const TransferABI = Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
     const {EvmReceiptLog: EVMReceiptLog} = this.ctx.model
     const {or: $or, in: $in} = this.app.Sequelize.Op
-    let topicAddresses = rawAddresses
+    const topicAddresses = rawAddresses
       .filter(address => address.type === Address.PAY_TO_PUBLIC_KEY_HASH)
       .map(address => Buffer.concat([Buffer.alloc(12), address.data]))
     return await EVMReceiptLog.count({
@@ -239,13 +239,13 @@ class AddressService extends Service {
     const TransferABI = Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
-    let topicAddresses = rawAddresses
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
+    const topicAddresses = rawAddresses
       .filter(address => address.type === Address.PAY_TO_PUBLIC_KEY_HASH)
       .map(address => Buffer.concat([Buffer.alloc(12), address.data]))
-    let totalCount = await this.getAddressQRC20TokenTransactionCount(rawAddresses, token)
-    let transactions = await db.query(sql`
+    const totalCount = await this.getAddressQRC20TokenTransactionCount(rawAddresses, token)
+    const transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
         receipt.output_index AS outputIndex,
@@ -270,7 +270,7 @@ class AddressService extends Service {
       ORDER BY list._id ${{raw: order}}
     `, {type: db.QueryTypes.SELECT})
 
-    let addresses = await this.ctx.service.contract.transformHexAddresses(
+    const addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
     )
     return {
@@ -278,15 +278,15 @@ class AddressService extends Service {
       transactions: transactions.map((transaction, index) => {
         let from = addresses[index * 2]
         let to = addresses[index * 2 + 1]
-        let fromAddress = rawAddresses.find(address => Buffer.compare(address.data, transaction.topic2.slice(12)) === 0)
+        const fromAddress = rawAddresses.find(address => address.data.compare(transaction.topic2, 12) === 0)
         if (fromAddress) {
           from = fromAddress.toString()
         }
-        let toAddress = rawAddresses.find(address => Buffer.compare(address.data, transaction.topic3.slice(12)) === 0)
+        const toAddress = rawAddresses.find(address => address.data.compare(transaction.topic3, 12) === 0)
         if (toAddress) {
           to = toAddress.toString()
         }
-        let value = BigInt(`0x${transaction.data.toString('hex')}`)
+        const value = BigInt(`0x${transaction.data.toString('hex')}`)
         return {
           transactionId: transaction.transactionId,
           outputIndex: transaction.outputIndex,
@@ -307,7 +307,7 @@ class AddressService extends Service {
     const {Address: RawAddress, OutputScript, Solidity} = this.app.qtuminfo.lib
     const transferABI = Solidity.qrc20ABIs.find(abi => abi.name === 'transfer')
     const {Address, Transaction, TransactionOutput, Contract, EvmReceipt: EVMReceipt, where, col} = this.ctx.model
-    let hexAddresses = rawAddresses
+    const hexAddresses = rawAddresses
       .filter(address => address.type === RawAddress.PAY_TO_PUBLIC_KEY_HASH)
       .map(address => address.data)
     let transactions = await EVMReceipt.findAll({
@@ -347,33 +347,33 @@ class AddressService extends Service {
     })
 
     transactions = transactions.filter(transaction => {
-      let scriptPubKey = OutputScript.fromBuffer(transaction.output.scriptPubKey)
+      const scriptPubKey = OutputScript.fromBuffer(transaction.output.scriptPubKey)
       if (![OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
         return false
       }
-      let byteCode = scriptPubKey.byteCode
+      const byteCode = scriptPubKey.byteCode
       if (byteCode.length !== 68
-        || Buffer.compare(byteCode.slice(0, 4), transferABI.id) !== 0
-        || Buffer.compare(byteCode.slice(4, 16), Buffer.alloc(12)) !== 0
+        || byteCode.slice(0, 4).compare(transferABI.id) !== 0
+        || byteCode.slice(4, 16).compare(Buffer.alloc(12)) !== 0
       ) {
         console.log(byteCode.length, byteCode.slice(4, 16).toString('hex'))
         return false
       }
-      let from = transaction.senderData
-      let to = byteCode.slice(16, 36)
-      let isFrom = hexAddresses.some(address => Buffer.compare(address, from) === 0)
-      let isTo = hexAddresses.some(address => Buffer.compare(address, to) === 0)
+      const from = transaction.senderData
+      const to = byteCode.slice(16, 36)
+      const isFrom = hexAddresses.some(address => address.compare(from) === 0)
+      const isTo = hexAddresses.some(address => address.compare(to) === 0)
       return isFrom || isTo
     })
     return await Promise.all(transactions.map(async transaction => {
-      let scriptPubKey = OutputScript.fromBuffer(transaction.output.scriptPubKey)
-      let byteCode = scriptPubKey.byteCode
-      let from = transaction.senderData
-      let to = byteCode.slice(16, 36)
-      let value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
-      let isFrom = hexAddresses.some(address => Buffer.compare(address, from) === 0)
-      let isTo = hexAddresses.some(address => Buffer.compare(address, to) === 0)
-      let addresses = await this.ctx.service.contract.transformHexAddresses([from, to])
+      const scriptPubKey = OutputScript.fromBuffer(transaction.output.scriptPubKey)
+      const byteCode = scriptPubKey.byteCode
+      const from = transaction.senderData
+      const to = byteCode.slice(16, 36)
+      const value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
+      const isFrom = hexAddresses.some(address => address.compare(from) === 0)
+      const isTo = hexAddresses.some(address => address.compare(to) === 0)
+      const addresses = await this.ctx.service.contract.transformHexAddresses([from, to])
       return {
         transactionId: transaction.transaction.id,
         outputIndex: transaction.outputIndex,
@@ -389,7 +389,7 @@ class AddressService extends Service {
     const {Address, Transaction, TransactionOutput} = this.ctx.model
     const {in: $in, gt: $gt} = this.app.Sequelize.Op
     const blockHeight = this.app.blockchainInfo.tip.height
-    let utxos = await TransactionOutput.findAll({
+    const utxos = await TransactionOutput.findAll({
       where: {
         addressId: {[$in]: ids},
         blockHeight: {[$gt]: 0},

@@ -4,13 +4,13 @@ class StatisticsService extends Service {
   async get24hStatistics() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let timestamp = Math.floor(Date.now() / 1000)
+    const timestamp = Math.floor(Date.now() / 1000)
     let [{fromHeight, toHeight}] = await db.query(sql`
       SELECT MIN(height) as fromHeight, MAX(height) as toHeight FROM header
       WHERE timestamp BETWEEN ${timestamp - 86400 + 1} AND ${timestamp}
     `, {type: db.QueryTypes.SELECT})
     fromHeight = Math.max(fromHeight, 1)
-    let [[{transactionCount}], [{transactionVolume}], [{averageBlockTime}]] = await Promise.all([
+    const [[{transactionCount}], [{transactionVolume}], [{averageBlockTime}]] = await Promise.all([
       db.query(sql`
         SELECT SUM(transactions_count) AS transactionCount FROM block WHERE height BETWEEN ${fromHeight} AND ${toHeight}
       `, {type: db.QueryTypes.SELECT}),
@@ -33,7 +33,7 @@ class StatisticsService extends Service {
   async getDailyTransactions() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let result = await db.query(sql`
+    const result = await db.query(sql`
       SELECT
         FLOOR(header.timestamp / 86400) AS date,
         SUM(block.transactions_count) AS transactionsCount,
@@ -55,15 +55,15 @@ class StatisticsService extends Service {
   async getBlockIntervalStatistics() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let skips = this.app.chain.lastPoWBlockHeight === Infinity ? 1 : this.app.chain.lastPoWBlockHeight + 1
-    let result = await db.query(sql`
+    const skips = this.app.chain.lastPoWBlockHeight === Infinity ? 1 : this.app.chain.lastPoWBlockHeight + 1
+    const result = await db.query(sql`
       SELECT header.timestamp - prev_header.timestamp AS blockInterval, COUNT(*) AS count FROM header
       INNER JOIN header prev_header ON prev_header.height = header.height - 1
       WHERE header.height > ${skips}
       GROUP BY blockInterval
       ORDER BY blockInterval ASC
     `, {type: db.QueryTypes.SELECT})
-    let total = this.app.blockchainInfo.tip.height - skips
+    const total = this.app.blockchainInfo.tip.height - skips
     return result.map(({blockInterval, count}) => ({interval: blockInterval, count, percentage: count / total}))
   }
 
@@ -71,7 +71,7 @@ class StatisticsService extends Service {
     const db = this.ctx.model
     const {Address} = db
     const {sql} = this.ctx.helper
-    let result = await db.query(sql`
+    const result = await db.query(sql`
       SELECT FLOOR(header.timestamp / 86400) AS date, COUNT(*) AS count FROM address, header
       WHERE address.create_height = header.height AND address.type < ${Address.parseType('contract')}
       GROUP BY date

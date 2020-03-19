@@ -14,7 +14,7 @@ function transformSQLArg(arg) {
 }
 
 exports.sql = function(strings, ...args) {
-  let buffer = []
+  const buffer = []
   for (let i = 0; i < args.length; ++i) {
     buffer.push(strings[i].replace(/\s+/g, ' '), transformSQLArg(args[i]))
   }

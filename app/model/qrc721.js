@@ -1,7 +1,7 @@
 module.exports = app => {
   const {CHAR, BLOB} = app.Sequelize
 
-  let QRC721 = app.model.define('qrc721', {
+  const QRC721 = app.model.define('qrc721', {
     contractAddress: {
       type: CHAR(20).BINARY,
       primaryKey: true
@@ -27,7 +27,7 @@ module.exports = app => {
     totalSupply: {
       type: CHAR(32).BINARY,
       get() {
-        let totalSupply = this.getDataValue('totalSupply')
+        const totalSupply = this.getDataValue('totalSupply')
         return totalSupply == null ? null : BigInt(`0x${totalSupply.toString('hex')}`)
       },
       set(totalSupply) {

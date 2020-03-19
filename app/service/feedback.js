@@ -3,12 +3,12 @@ const {Service} = require('egg')
 class FeedbackService extends Service {
   async createFeedback(name, email, content) {
     const {Feedback} = this.ctx.model
-    let feedback = await Feedback.create({name, email, content})
+    const feedback = await Feedback.create({name, email, content})
     await this.sendMail(feedback)
   }
 
   generateMail(feedback, {receivers} = {}) {
-    let {name, email, content} = feedback
+    const {name, email, content} = feedback
     return {
       to: receivers,
       subject: `Qtum.info feedback from ${name}`,

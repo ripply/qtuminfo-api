@@ -4,10 +4,10 @@ class BlockService extends Service {
   async getBlock(arg) {
     const {Header, Address, Block, Transaction} = this.ctx.model
 
-    let cache = this.ctx.service.cache.getLRUCache('block')
-    let cachedBlock = await cache.get(arg)
+    const cache = this.ctx.service.cache.getLRUCache('block')
+    const cachedBlock = await cache.get(arg)
     if (cachedBlock) {
-      let nextHeader = await Header.findOne({
+      const nextHeader = await Header.findOne({
         where: {height: cachedBlock.height + 1},
         attributes: ['hash']
       })
@@ -24,7 +24,7 @@ class BlockService extends Service {
     } else {
       return null
     }
-    let result = await Header.findOne({
+    const result = await Header.findOne({
       where: filter,
       include: [{
         model: Block,
@@ -41,7 +41,7 @@ class BlockService extends Service {
     if (!result) {
       return null
     }
-    let [prevHeader, nextHeader, transactions, [reward]] = await Promise.all([
+    const [prevHeader, nextHeader, transactions, [reward]] = await Promise.all([
       Header.findOne({
         where: {height: result.height - 1},
         attributes: ['timestamp']
@@ -57,7 +57,7 @@ class BlockService extends Service {
       }),
       this.getBlockRewards(result.height)
     ])
-    let block = {
+    const block = {
       hash: result.hash,
       height: result.height,
       version: result.version,
@@ -101,16 +101,16 @@ class BlockService extends Service {
     } else {
       return null
     }
-    let block = await Header.findOne({where: filter})
+    const block = await Header.findOne({where: filter})
     if (!block) {
       return null
     }
-    let transactionIds = (await Transaction.findAll({
+    const transactionIds = (await Transaction.findAll({
       where: {blockHeight: block.height},
       attributes: ['id'],
       order: [['indexInBlock', 'ASC']]
     })).map(tx => tx.id)
-    let transactions = await Promise.all(transactionIds.map(id => this.ctx.service.transaction.getRawTransaction(id)))
+    const transactions = await Promise.all(transactionIds.map(id => this.ctx.service.transaction.getRawTransaction(id)))
     return new RawBlock({
       header: new RawHeader({
         version: block.version,
@@ -136,12 +136,12 @@ class BlockService extends Service {
     if (dateFilter) {
       dateFilterString = sql`AND timestamp BETWEEN ${dateFilter.min} AND ${dateFilter.max - 1}`
     }
-    let [{totalCount}] = await db.query(sql`
+    const [{totalCount}] = await db.query(sql`
       SELECT COUNT(*) AS totalCount FROM header WHERE height <= ${this.app.blockchainInfo.tip.height} ${{raw: dateFilterString}}
     `, {type: db.QueryTypes.SELECT})
     let blocks
     if (this.ctx.state.pagination) {
-      let {limit, offset} = this.ctx.state.pagination
+      const {limit, offset} = this.ctx.state.pagination
       blocks = await db.query(sql`
         SELECT
           header.hash AS hash, l.height AS height, header.timestamp AS timestamp,
@@ -179,7 +179,7 @@ class BlockService extends Service {
   async getRecentBlocks(count) {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let blocks = await db.query(sql`
+    const blocks = await db.query(sql`
       SELECT
         l.hash AS hash, l.height AS height, header.timestamp AS timestamp,
         l.size AS size, address.string AS miner
@@ -200,7 +200,7 @@ class BlockService extends Service {
   async getBlockRewards(startHeight, endHeight = startHeight + 1) {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let rewards = await db.query(sql`
+    const rewards = await db.query(sql`
       SELECT SUM(value) AS value FROM (
         SELECT tx.block_height AS height, output.value AS value FROM header, transaction tx, transaction_output output
         WHERE
@@ -224,7 +224,7 @@ class BlockService extends Service {
       GROUP BY height
       ORDER BY height ASC
     `, {type: db.QueryTypes.SELECT})
-    let result = rewards.map(reward => BigInt(reward.value))
+    const result = rewards.map(reward => BigInt(reward.value))
     if (startHeight[0] === 0) {
       result[0] = 0n
     }
@@ -235,7 +235,7 @@ class BlockService extends Service {
     const db = this.ctx.model
     const {Header} = db
     const {sql} = this.ctx.helper
-    let transactionCountMapping = new Map(
+    const transactionCountMapping = new Map(
       (await db.query(sql`
         SELECT block.height AS height, MAX(transaction.index_in_block) + 1 AS transactionsCount
         FROM block
@@ -245,16 +245,16 @@ class BlockService extends Service {
       `, {type: db.QueryTypes.SELECT}))
         .map(({height, transactionsCount}) => [height, transactionsCount])
     )
-    let [prevHeader, rewards] = await Promise.all([
+    const [prevHeader, rewards] = await Promise.all([
       Header.findOne({
         where: {height: blocks[0].height - 1},
         attributes: ['timestamp']
       }),
       this.getBlockRewards(blocks[0].height, blocks[blocks.length - 1].height + 1)
     ])
-    let result = []
+    const result = []
     for (let i = blocks.length; --i >= 0;) {
-      let block = blocks[i]
+      const block = blocks[i]
       let interval
       if (i === 0) {
         interval = prevHeader ? block.timestamp - prevHeader.timestamp : null
@@ -282,9 +282,9 @@ class BlockService extends Service {
     const {gte: $gte} = this.app.Sequelize.Op
     const blockHeightOffset = this.app.chain.lastPoWBlockHeight >= 0xffffffff ? 1 : this.app.chain.lastPoWBlockHeight + 1
     let fromBlock = blockHeightOffset
-    let timestamp = Math.floor(Date.now() / 1000)
+    const timestamp = Math.floor(Date.now() / 1000)
     if (lastNDays != null) {
-      let [{fromBlockHeight}] = await db.query(sql`
+      const [{fromBlockHeight}] = await db.query(sql`
         SELECT MIN(height) as fromBlockHeight FROM header
         WHERE timestamp > ${timestamp - 86400 * lastNDays}
       `, {type: db.QueryTypes.SELECT})
@@ -292,13 +292,13 @@ class BlockService extends Service {
         fromBlock = fromBlockHeight
       }
     }
-    let {limit, offset} = this.ctx.state.pagination
-    let totalCount = await Block.count({
+    const {limit, offset} = this.ctx.state.pagination
+    const totalCount = await Block.count({
       where: {height: {[$gte]: fromBlock}},
       distinct: true,
       col: 'minerId'
     })
-    let list = await db.query(sql`
+    const list = await db.query(sql`
       SELECT
         address.string AS address,
         list.blocks AS blocks,
@@ -334,7 +334,7 @@ class BlockService extends Service {
 
   async getBlockTransactions(height) {
     const {Transaction} = this.ctx.model
-    let transactions = await Transaction.findAll({
+    const transactions = await Transaction.findAll({
       where: {blockHeight: height},
       attributes: ['id']
     })
@@ -345,8 +345,8 @@ class BlockService extends Service {
     const {Address, Transaction, BalanceChange, EvmReceipt: EVMReceipt, EvmReceiptLog: EVMReceiptLog, Contract} = this.ctx.model
     const {Address: RawAddress} = this.app.qtuminfo.lib
     const TransferABI = this.app.qtuminfo.lib.Solidity.qrc20ABIs.find(abi => abi.name === 'Transfer')
-    let result = []
-    let balanceChanges = await BalanceChange.findAll({
+    const result = []
+    const balanceChanges = await BalanceChange.findAll({
       attributes: [],
       include: [
         {
@@ -364,19 +364,19 @@ class BlockService extends Service {
         }
       ]
     })
-    for (let {transaction, address} of balanceChanges) {
+    for (const {transaction, address} of balanceChanges) {
       result[transaction.indexInBlock] = result[transaction.indexInBlock] ?? new Set()
       result[transaction.indexInBlock].add(address.string)
     }
-    let receipts = await EVMReceipt.findAll({
+    const receipts = await EVMReceipt.findAll({
       where: {blockHeight: height},
       attributes: ['indexInBlock', 'senderType', 'senderData']
     })
-    for (let {indexInBlock, senderType, senderData} of receipts) {
+    for (const {indexInBlock, senderType, senderData} of receipts) {
       result[indexInBlock] = result[indexInBlock] ?? new Set()
       result[indexInBlock].add(new RawAddress({type: senderType, data: senderData, chain: this.app.chain}).toString())
     }
-    let receiptLogs = await EVMReceiptLog.findAll({
+    const receiptLogs = await EVMReceiptLog.findAll({
       attributes: ['topic1', 'topic2', 'topic3', 'topic4'],
       include: [
         {
@@ -394,18 +394,18 @@ class BlockService extends Service {
         }
       ]
     })
-    for (let {topic1, topic2, topic3, topic4, receipt, contract} of receiptLogs) {
-      let set = result[receipt.indexInBlock] = result[receipt.indexInBlock] || new Set()
+    for (const {topic1, topic2, topic3, topic4, receipt, contract} of receiptLogs) {
+      const set = result[receipt.indexInBlock] = result[receipt.indexInBlock] || new Set()
       set.add(contract.addressString)
-      if (Buffer.compare(topic1, TransferABI.id) === 0 && topic3) {
+      if (topic1.compare(TransferABI.id) === 0 && topic3) {
         if (contract.type === 'qrc20' && !topic4 || contract.type === 'qrc721' && topic4) {
-          let sender = topic2.slice(12)
-          let receiver = topic3.slice(12)
-          if (Buffer.compare(sender, Buffer.alloc(20)) !== 0) {
+          const sender = topic2.slice(12)
+          const receiver = topic3.slice(12)
+          if (sender.compare(Buffer.alloc(20)) !== 0) {
             set.add(new RawAddress({type: Address.PAY_TO_PUBLIC_KEY_HASH, data: sender, chain: this.app.chain}).toString())
             set.add(new RawAddress({type: Address.EVM_CONTRACT, data: sender, chain: this.app.chain}).toString())
           }
-          if (Buffer.compare(receiver, Buffer.alloc(20)) !== 0) {
+          if (receiver.compare(Buffer.alloc(20)) !== 0) {
             set.add(new RawAddress({type: Address.PAY_TO_PUBLIC_KEY_HASH, data: receiver, chain: this.app.chain}).toString())
             set.add(new RawAddress({type: Address.EVM_CONTRACT, data: receiver, chain: this.app.chain}).toString())
           }
@@ -417,7 +417,7 @@ class BlockService extends Service {
 
   getBlockFilter(category = 'blockHeight') {
     const {gte: $gte, lte: $lte, between: $between} = this.app.Sequelize.Op
-    let {fromBlock, toBlock} = this.ctx.state
+    const {fromBlock, toBlock} = this.ctx.state
     let blockFilter = null
     if (fromBlock != null && toBlock != null) {
       blockFilter = {[$between]: [fromBlock, toBlock]}
@@ -431,7 +431,7 @@ class BlockService extends Service {
 
   getRawBlockFilter(category = 'block_height') {
     const {sql} = this.ctx.helper
-    let {fromBlock, toBlock} = this.ctx.state
+    const {fromBlock, toBlock} = this.ctx.state
     let blockFilter = 'TRUE'
     if (fromBlock != null && toBlock != null) {
       blockFilter = sql`${{raw: category}} BETWEEN ${fromBlock} AND ${toBlock}`

@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT, CHAR} = app.Sequelize
 
-  let Block = app.model.define('block', {
+  const Block = app.model.define('block', {
     hash: {
       type: CHAR(32).BINARY,
       unique: true
@@ -19,7 +19,7 @@ module.exports = app => {
     transactionVolume: {
       type: BIGINT,
       get() {
-        let transactionVolume = this.getDataValue('transactionVolume')
+        const transactionVolume = this.getDataValue('transactionVolume')
         return transactionVolume == null ? null : BigInt(transactionVolume)
       },
       set(transactionVolume) {

@@ -3,7 +3,7 @@ const {Service} = require('egg')
 class QRC721Service extends Service {
   async getQRC721Summary(contractAddress) {
     const {Qrc721: QRC721, Qrc721Statistics: QRC721Statistics} = this.ctx.model
-    let qrc721 = await QRC721.findOne({
+    const qrc721 = await QRC721.findOne({
       where: {contractAddress},
       attributes: ['name', 'symbol', 'totalSupply'],
       include: [{
@@ -26,13 +26,13 @@ class QRC721Service extends Service {
   async listQRC721Tokens() {
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let {limit, offset} = this.ctx.state.pagination
+    const {limit, offset} = this.ctx.state.pagination
 
-    let [{totalCount}] = await db.query(sql`
+    const [{totalCount}] = await db.query(sql`
       SELECT COUNT(DISTINCT(qrc721_token.contract_address)) AS count FROM qrc721_token
       INNER JOIN qrc721 USING (contract_address)
     `, {type: db.QueryTypes.SELECT})
-    let list = await db.query(sql`
+    const list = await db.query(sql`
       SELECT
         contract.address_string AS address, contract.address AS addressHex,
         qrc721.name AS name, qrc721.symbol AS symbol, qrc721.total_supply AS totalSupply,
@@ -68,7 +68,7 @@ class QRC721Service extends Service {
     }
     const db = this.ctx.model
     const {sql} = this.ctx.helper
-    let list = await db.query(sql`
+    const list = await db.query(sql`
       SELECT
         contract.address AS addressHex, contract.address_string AS address,
         qrc721.name AS name,
@@ -96,17 +96,17 @@ class QRC721Service extends Service {
     const db = this.ctx.model
     const {EvmReceiptLog: EVMReceiptLog} = db
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
 
-    let totalCount = await EVMReceiptLog.count({
+    const totalCount = await EVMReceiptLog.count({
       where: {
         ...this.ctx.service.block.getBlockFilter(),
         address: contractAddress,
         topic1: TransferABI.id
       }
     })
-    let transactions = await db.query(sql`
+    const transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
         evm_receipt.output_index AS outputIndex,
@@ -127,14 +127,14 @@ class QRC721Service extends Service {
       ORDER BY list._id ${{raw: order}}
     `, {type: db.QueryTypes.SELECT})
 
-    let addresses = await this.ctx.service.contract.transformHexAddresses(
+    const addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
     )
     return {
       totalCount,
       transactions: transactions.map((transaction, index) => {
-        let from = addresses[index * 2]
-        let to = addresses[index * 2 + 1]
+        const from = addresses[index * 2]
+        const to = addresses[index * 2 + 1]
         return {
           transactionId: transaction.transactionId,
           outputIndex: transaction.outputIndex,
@@ -155,21 +155,21 @@ class QRC721Service extends Service {
     const db = this.ctx.model
     const {Qrc721: QRC721, Qrc721Statistics: QRC721Statistics} = db
     const {sql} = this.ctx.helper
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
-      let result = (await QRC721.findAll({
+      const result = (await QRC721.findAll({
         attributes: ['contractAddress'],
         order: [['contractAddress', 'ASC']],
         transaction
       })).map(({contractAddress}) => ({contractAddress, holders: 0, transactions: 0}))
-      let holderResults = await db.query(sql`
+      const holderResults = await db.query(sql`
         SELECT contract_address AS contractAddress, COUNT(*) AS count FROM qrc721_token
         GROUP BY contractAddress ORDER BY contractAddress ASC
       `, {type: db.QueryTypes.SELECT, transaction})
       let i = 0
-      for (let {contractAddress, count} of holderResults) {
+      for (const {contractAddress, count} of holderResults) {
         while (i < result.length) {
-          let comparison = Buffer.compare(contractAddress, result[i].contractAddress)
+          const comparison = contractAddress.compare(result[i].contractAddress)
           if (comparison === 0) {
             result[i].holders = count
             break
@@ -180,15 +180,15 @@ class QRC721Service extends Service {
           }
         }
       }
-      let transactionResults = await db.query(sql`
+      const transactionResults = await db.query(sql`
         SELECT address AS contractAddress, COUNT(*) AS count FROM evm_receipt_log USE INDEX (contract)
         WHERE topic1 = ${TransferABI.id}
         GROUP BY contractAddress ORDER BY contractAddress
       `, {type: db.QueryTypes.SELECT, transaction})
       let j = 0
-      for (let {contractAddress, count} of transactionResults) {
+      for (const {contractAddress, count} of transactionResults) {
         while (j < result.length) {
-          let comparison = Buffer.compare(contractAddress, result[j].contractAddress)
+          const comparison = contractAddress.compare(result[j].contractAddress)
           if (comparison === 0) {
             result[j].transactions = count
             break

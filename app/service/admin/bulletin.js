@@ -3,7 +3,7 @@ const {Service} = require('egg')
 class BulletinService extends Service {
   async listAllBulletins() {
     const {Bulletin, BulletinTranslation} = this.ctx.model
-    let list = await Bulletin.findAll({
+    const list = await Bulletin.findAll({
       include: [{
         model: BulletinTranslation,
         as: 'translations'
@@ -27,10 +27,10 @@ class BulletinService extends Service {
   async createBulletin({locale, title, url, priority, translations}) {
     const db = this.ctx.model
     const {Bulletin, BulletinTranslation} = db
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
-      let bulletin = await Bulletin.create({locale, title, url, priority}, {transaction})
-      let bulletinTranslations = await BulletinTranslation.bulkCreate(
+      const bulletin = await Bulletin.create({locale, title, url, priority}, {transaction})
+      const bulletinTranslations = await BulletinTranslation.bulkCreate(
         translations.map(translation => ({
           bulletinId: bulletin._id,
           locale: translation.locale,
@@ -60,14 +60,14 @@ class BulletinService extends Service {
   async updateBulletin({id, locale, title, url, priority, translations}) {
     const db = this.ctx.model
     const {Bulletin, BulletinTranslation} = db
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
       await Bulletin.update(
         {locale, title, url, priority},
         {where: {_id: id}, transaction}
       )
       await BulletinTranslation.destroy({where: {bulletinId: id}, transaction})
-      let bulletinTranslations = await BulletinTranslation.bulkCreate(
+      const bulletinTranslations = await BulletinTranslation.bulkCreate(
         translations.map(translation => ({
           bulletinId: id,
           locale: translation.locale,
@@ -97,7 +97,7 @@ class BulletinService extends Service {
   async removeBulletin(id) {
     const db = this.ctx.model
     const {Bulletin, BulletinTranslation} = db
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
       await Bulletin.destroy({where: {_id: id}, transaction})
       await BulletinTranslation.destroy({where: {bulletinId: id}, transaction})
@@ -110,9 +110,9 @@ class BulletinService extends Service {
   async setPriority(mapping) {
     const db = this.ctx.model
     const {Bulletin} = db
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
-      for (let [id, priority] of Object.entries(mapping)) {
+      for (const [id, priority] of Object.entries(mapping)) {
         await Bulletin.update({priority}, {where: {_id: Number(id)}, transaction})
       }
       await transaction.commit()

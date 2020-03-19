@@ -32,7 +32,7 @@ module.exports = app => {
     type: {
       type: INTEGER(3).UNSIGNED,
       get() {
-        let type = this.getDataValue('type')
+        const type = this.getDataValue('type')
         return addressTypeMap[type] ?? null
       },
       set(type) {

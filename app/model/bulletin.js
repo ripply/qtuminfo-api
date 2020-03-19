@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, STRING} = app.Sequelize
 
-  let Bulletin = app.model.define('bulletin', {
+  const Bulletin = app.model.define('bulletin', {
     _id: {
       type: INTEGER.UNSIGNED,
       field: '_id',

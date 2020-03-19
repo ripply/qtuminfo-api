@@ -2,10 +2,13 @@ const {Controller} = require('egg')
 
 class AddressController extends Controller {
   async summary() {
-    let {ctx} = this
-    let {address} = ctx.state
-    let summary = await ctx.service.address.getAddressSummary(address.addressIds, address.p2pkhAddressIds, address.rawAddresses)
-    ctx.body = {
+    const {address} = this.ctx.state
+    const summary = await this.ctx.service.address.getAddressSummary(
+      address.addressIds,
+      address.p2pkhAddressIds,
+      address.rawAddresses
+    )
+    this.ctx.body = {
       balance: summary.balance.toString(),
       totalReceived: summary.totalReceived.toString(),
       totalSent: summary.totalSent.toString(),
@@ -39,49 +42,48 @@ class AddressController extends Controller {
   }
 
   async balance() {
-    let {ctx} = this
-    let balance = await ctx.service.balance.getBalance(ctx.state.address.addressIds)
-    ctx.body = balance.toString()
+    const balance = await this.ctx.service.balance.getBalance(this.ctx.state.address.addressIds)
+    this.ctx.body = balance.toString()
   }
 
   async totalReceived() {
-    let {ctx} = this
-    let {totalReceived} = await ctx.service.balance.getTotalBalanceChanges(ctx.state.address.addressIds)
-    ctx.body = totalReceived.toString()
+    const {totalReceived} = await this.ctx.service.balance.getTotalBalanceChanges(this.ctx.state.address.addressIds)
+    this.ctx.body = totalReceived.toString()
   }
 
   async totalSent() {
-    let {ctx} = this
-    let {totalSent} = await ctx.service.balance.getTotalBalanceChanges(ctx.state.address.addressIds)
-    ctx.body = totalSent.toString()
+    const {totalSent} = await this.ctx.service.balance.getTotalBalanceChanges(this.ctx.state.address.addressIds)
+    this.ctx.body = totalSent.toString()
   }
 
   async unconfirmedBalance() {
-    let {ctx} = this
-    let unconfirmed = await ctx.service.balance.getUnconfirmedBalance(ctx.state.address.addressIds)
-    ctx.body = unconfirmed.toString()
+    const unconfirmed = await this.ctx.service.balance.getUnconfirmedBalance(this.ctx.state.address.addressIds)
+    this.ctx.body = unconfirmed.toString()
   }
 
   async stakingBalance() {
-    let {ctx} = this
-    let unconfirmed = await ctx.service.balance.getStakingBalance(ctx.state.address.addressIds)
-    ctx.body = unconfirmed.toString()
+    const unconfirmed = await this.ctx.service.balance.getStakingBalance(this.ctx.state.address.addressIds)
+    this.ctx.body = unconfirmed.toString()
   }
 
   async matureBalance() {
-    let {ctx} = this
-    let unconfirmed = await ctx.service.balance.getMatureBalance(ctx.state.address.p2pkhAddressIds)
-    ctx.body = unconfirmed.toString()
+    const unconfirmed = await this.ctx.service.balance.getMatureBalance(this.ctx.state.address.p2pkhAddressIds)
+    this.ctx.body = unconfirmed.toString()
   }
 
   async qrc20TokenBalance() {
-    let {ctx} = this
-    let {address, token} = ctx.state
+    const {address, token} = this.ctx.state
     if (token.type !== 'qrc20') {
-      ctx.body = {}
+      this.ctx.body = {}
     }
-    let {name, symbol, decimals, balance, unconfirmed} = await ctx.service.qrc20.getQRC20Balance(address.rawAddresses, token.contractAddress)
-    ctx.body = {
+    const {
+      name,
+      symbol,
+      decimals,
+      balance,
+      unconfirmed
+    } = await this.ctx.service.qrc20.getQRC20Balance(address.rawAddresses, token.contractAddress)
+    this.ctx.body = {
       name,
       symbol,
       decimals,
@@ -94,19 +96,20 @@ class AddressController extends Controller {
   }
 
   async transactions() {
-    let {ctx} = this
-    let {address} = ctx.state
-    let {totalCount, transactions} = await ctx.service.address.getAddressTransactions(address.addressIds, address.rawAddresses)
-    ctx.body = {
+    const {address} = this.ctx.state
+    const {
+      totalCount,
+      transactions
+    } = await this.ctx.service.address.getAddressTransactions(address.addressIds, address.rawAddresses)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(id => id.toString('hex'))
     }
   }
 
   async basicTransactions() {
-    let {ctx} = this
-    let {totalCount, transactions} = await ctx.service.address.getAddressBasicTransactions(ctx.state.address.addressIds)
-    ctx.body = {
+    const {totalCount, transactions} = await this.ctx.service.address.getAddressBasicTransactions(this.ctx.state.address.addressIds)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(transaction => ({
         id: transaction.id.toString('hex'),
@@ -125,10 +128,9 @@ class AddressController extends Controller {
   }
 
   async contractTransactions() {
-    let {ctx} = this
-    let {address, contract} = ctx.state
-    let {totalCount, transactions} = await ctx.service.address.getAddressContractTransactions(address.rawAddresses, contract)
-    ctx.body = {
+    const {address, contract} = this.ctx.state
+    const {totalCount, transactions} = await this.ctx.service.address.getAddressContractTransactions(address.rawAddresses, contract)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(transaction => ({
         transactionId: transaction.transactionId.toString('hex'),
@@ -161,10 +163,9 @@ class AddressController extends Controller {
   }
 
   async qrc20TokenTransactions() {
-    let {ctx} = this
-    let {address, token} = ctx.state
-    let {totalCount, transactions} = await ctx.service.address.getAddressQRC20TokenTransactions(address.rawAddresses, token)
-    ctx.body = {
+    const {address, token} = this.ctx.state
+    const {totalCount, transactions} = await this.ctx.service.address.getAddressQRC20TokenTransactions(address.rawAddresses, token)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(transaction => ({
         transactionId: transaction.transactionId.toString('hex'),
@@ -184,10 +185,9 @@ class AddressController extends Controller {
   }
 
   async qrc20TokenMempoolTransactions() {
-    let {ctx} = this
-    let {address, token} = ctx.state
-    let transactions = await ctx.service.address.getAddressQRC20TokenMempoolTransactions(address.rawAddresses, token)
-    ctx.body = transactions.map(transaction => ({
+    const {address, token} = this.ctx.state
+    const transactions = await this.ctx.service.address.getAddressQRC20TokenMempoolTransactions(address.rawAddresses, token)
+    this.ctx.body = transactions.map(transaction => ({
       transactionId: transaction.transactionId.toString('hex'),
       outputIndex: transaction.outputIndex,
       from: transaction.from,
@@ -200,9 +200,8 @@ class AddressController extends Controller {
   }
 
   async utxo() {
-    let {ctx} = this
-    let utxos = await ctx.service.address.getUTXO(ctx.state.address.addressIds)
-    ctx.body = utxos.map(utxo => ({
+    const utxos = await this.ctx.service.address.getUTXO(this.ctx.state.address.addressIds)
+    this.ctx.body = utxos.map(utxo => ({
       transactionId: utxo.transactionId.toString('hex'),
       outputIndex: utxo.outputIndex,
       scriptPubKey: utxo.scriptPubKey.toString('hex'),
@@ -215,9 +214,8 @@ class AddressController extends Controller {
   }
 
   async balanceHistory() {
-    let {ctx} = this
-    let {totalCount, transactions} = await ctx.service.balance.getBalanceHistory(ctx.state.address.addressIds)
-    ctx.body = {
+    const {totalCount, transactions} = await this.ctx.service.balance.getBalanceHistory(this.ctx.state.address.addressIds)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(tx => ({
         id: tx.id.toString('hex'),
@@ -232,24 +230,23 @@ class AddressController extends Controller {
 
   async qrc20BalanceHistory() {
     const {Address} = this.app.qtuminfo.lib
-    let {ctx} = this
     let tokenAddress = null
-    if (ctx.state.token) {
-      if (ctx.state.token.type === 'qrc20') {
-        tokenAddress = ctx.state.token.contractAddress
+    if (this.ctx.state.token) {
+      if (this.ctx.state.token.type === 'qrc20') {
+        tokenAddress = this.ctx.state.token.contractAddress
       } else {
-        ctx.body = {
+        this.ctx.body = {
           totalCount: 0,
           transactions: []
         }
         return
       }
     }
-    let hexAddresses = ctx.state.address.rawAddresses
+    const hexAddresses = this.ctx.state.address.rawAddresses
       .filter(address => address.type === Address.PAY_TO_PUBLIC_KEY_HASH)
       .map(address => address.data)
-    let {totalCount, transactions} = await ctx.service.qrc20.getQRC20BalanceHistory(hexAddresses, tokenAddress)
-    ctx.body = {
+    const {totalCount, transactions} = await this.ctx.service.qrc20.getQRC20BalanceHistory(hexAddresses, tokenAddress)
+    this.ctx.body = {
       totalCount,
       transactions: transactions.map(tx => ({
         id: tx.id.toString('hex'),

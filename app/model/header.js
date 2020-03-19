@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, CHAR, BLOB} = app.Sequelize
 
-  let Header = app.model.define('header', {
+  const Header = app.model.define('header', {
     hash: {
       type: CHAR(32).BINARY,
       unique: true
@@ -27,7 +27,7 @@ module.exports = app => {
     chainwork: {
       type: CHAR(32).BINARY,
       get() {
-        let chainwork = this.getDataValue('chainwork')
+        const chainwork = this.getDataValue('chainwork')
         return chainwork == null ? null : BigInt(`0x${chainwork.toString('hex')}`)
       },
       set(chainwork) {
@@ -50,7 +50,7 @@ module.exports = app => {
   })
 
   Header.prototype.isProofOfStake = function isProofOfStake() {
-    return Buffer.compare(this.stakePrevTxId, Buffer.alloc(32)) !== 0 && this.stakeOutputIndex !== 0xffffffff
+    return this.stakePrevTxId.compare(Buffer.alloc(32)) !== 0 && this.stakeOutputIndex !== 0xffffffff
   }
 
   Header.associate = () => {

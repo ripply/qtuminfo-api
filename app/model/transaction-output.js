@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT, BOOLEAN, BLOB} = app.Sequelize
 
-  let TransactionOutput = app.model.define('transaction_output', {
+  const TransactionOutput = app.model.define('transaction_output', {
     transactionId: {
       type: BIGINT.UNSIGNED,
       primaryKey: true
@@ -18,7 +18,7 @@ module.exports = app => {
     value: {
       type: BIGINT,
       get() {
-        let value = this.getDataValue('value')
+        const value = this.getDataValue('value')
         return value == null ? null : BigInt(value)
       },
       set(value) {

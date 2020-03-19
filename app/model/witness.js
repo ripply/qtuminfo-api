@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, CHAR, BLOB} = app.Sequelize
 
-  let Witness = app.model.define('witness', {
+  const Witness = app.model.define('witness', {
     transactionId: {
       type: CHAR(32).BINARY,
       primaryKey: true

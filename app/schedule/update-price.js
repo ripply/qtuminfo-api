@@ -9,7 +9,7 @@ class UpdatePriceSubscription extends Subscription {
   }
 
   async subscribe() {
-    let price = await this.ctx.service.misc.getPrices()
+    const price = await this.ctx.service.misc.getPrices()
     await this.ctx.service.cache.setCache('qtum-price', price)
     this.app.io.of('/').to('coin')
       .emit('qtum-price', price)

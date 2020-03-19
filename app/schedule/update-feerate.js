@@ -9,7 +9,7 @@ class UpdateFeerateSubscription extends Subscription {
   }
 
   async subscribe() {
-    let feeRate = await this.ctx.service.info.getFeeRates()
+    const feeRate = await this.ctx.service.info.getFeeRates()
     if (feeRate) {
       await this.ctx.service.cache.setCache('feerate', feeRate)
       this.app.io.of('/').to('blockchain')

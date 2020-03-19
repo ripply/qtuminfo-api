@@ -3,7 +3,7 @@ const {Service} = require('egg')
 class QRC20Service extends Service {
   async getQRC20Summary(contractAddress) {
     const {Qrc20: QRC20, Qrc20Statistics: QRC20Statistics} = this.ctx.model
-    let qrc20 = await QRC20.findOne({
+    const qrc20 = await QRC20.findOne({
       where: {contractAddress},
       attributes: ['name', 'symbol', 'decimals', 'totalSupply', 'version'],
       include: [{
@@ -30,10 +30,10 @@ class QRC20Service extends Service {
     const {Qrc20Statistics: QRC20Statistics} = db
     const {sql} = this.ctx.helper
     const {gt: $gt} = this.app.Sequelize.Op
-    let {limit, offset} = this.ctx.state.pagination
+    const {limit, offset} = this.ctx.state.pagination
 
-    let totalCount = await QRC20Statistics.count({where: {transactions: {[$gt]: 0}}})
-    let list = await db.query(sql`
+    const totalCount = await QRC20Statistics.count({where: {transactions: {[$gt]: 0}}})
+    const list = await db.query(sql`
       SELECT
         contract.address_string AS address, contract.address AS addressHex,
         qrc20.name AS name, qrc20.symbol AS symbol, qrc20.decimals AS decimals, qrc20.total_supply AS totalSupply,
@@ -79,7 +79,7 @@ class QRC20Service extends Service {
       where, col
     } = this.ctx.model
     const {in: $in} = this.app.Sequelize.Op
-    let list = await QRC20.findAll({
+    const list = await QRC20.findAll({
       attributes: ['contractAddress', 'name', 'symbol', 'decimals'],
       include: [{
         model: Contract,
@@ -95,7 +95,7 @@ class QRC20Service extends Service {
         }]
       }]
     })
-    let mapping = new Map(list.map(item => [
+    const mapping = new Map(list.map(item => [
       item.contract.addressString,
       {
         address: item.contractAddress.toString('hex'),
@@ -110,7 +110,7 @@ class QRC20Service extends Service {
         }
       }
     ]))
-    let unconfirmedList = await EVMReceipt.findAll({
+    const unconfirmedList = await EVMReceipt.findAll({
       where: {blockHeight: 0xffffffff},
       attributes: ['senderData'],
       include: [
@@ -144,15 +144,15 @@ class QRC20Service extends Service {
         }
       ]
     })
-    for (let item of unconfirmedList) {
-      let scriptPubKey = OutputScript.fromBuffer(item.output.scriptPubKey)
+    for (const item of unconfirmedList) {
+      const scriptPubKey = OutputScript.fromBuffer(item.output.scriptPubKey)
       if (![OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
         continue
       }
-      let byteCode = scriptPubKey.byteCode
+      const byteCode = scriptPubKey.byteCode
       if (byteCode.length === 68
-        && Buffer.compare(byteCode.slice(0, 4), transferABI.id) === 0
-        && Buffer.compare(byteCode.slice(4, 16), Buffer.alloc(12)) === 0
+        && byteCode.slice(0, 4).compare(transferABI.id) === 0
+        && byteCode.slice(4, 16).compare(Buffer.alloc(12)) === 0
       ) {
         let data = {}
         if (mapping.has(item.output.address.contract.addressString)) {
@@ -174,11 +174,11 @@ class QRC20Service extends Service {
           }
           mapping.set(item.output.address.contract.addressString, data)
         }
-        let from = item.senderData
-        let to = byteCode.slice(16, 36)
-        let value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
-        let isFrom = hexAddresses.some(address => Buffer.compare(address, from) === 0)
-        let isTo = hexAddresses.some(address => Buffer.compare(address, to) === 0)
+        const from = item.senderData
+        const to = byteCode.slice(16, 36)
+        const value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
+        const isFrom = hexAddresses.some(address => address.compare(from) === 0)
+        const isTo = hexAddresses.some(address => address.compare(to) === 0)
         if (isFrom || isTo) {
           delete data.isNew
         }
@@ -201,21 +201,21 @@ class QRC20Service extends Service {
       where, col
     } = this.ctx.model
     const {in: $in} = this.app.Sequelize.Op
-    let hexAddresses = rawAddresses
+    const hexAddresses = rawAddresses
       .filter(address => [RawAddress.PAY_TO_PUBLIC_KEY_HASH, RawAddress.CONTRACT, RawAddress.EVM_CONTRACT].includes(address.type))
       .map(address => address.data)
     if (hexAddresses.length === 0) {
       return []
     }
-    let token = await QRC20.findOne({
+    const token = await QRC20.findOne({
       where: {contractAddress: tokenAddress},
       attributes: ['name', 'symbol', 'decimals']
     })
-    let list = await QRC20Balance.findAll({
+    const list = await QRC20Balance.findAll({
       where: {contractAddress: tokenAddress, address: {[$in]: hexAddresses}},
       attributes: ['balance']
     })
-    let unconfirmedList = await EVMReceipt.findAll({
+    const unconfirmedList = await EVMReceipt.findAll({
       where: {blockHeight: 0xffffffff},
       attributes: ['senderData'],
       include: [{
@@ -242,25 +242,25 @@ class QRC20Service extends Service {
         }]
       }]
     })
-    let unconfirmed = {
+    const unconfirmed = {
       received: 0n,
       sent: 0n
     }
-    for (let item of unconfirmedList) {
-      let scriptPubKey = OutputScript.fromBuffer(item.output.scriptPubKey)
+    for (const item of unconfirmedList) {
+      const scriptPubKey = OutputScript.fromBuffer(item.output.scriptPubKey)
       if (![OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
         continue
       }
-      let byteCode = scriptPubKey.byteCode
+      const byteCode = scriptPubKey.byteCode
       if (byteCode.length === 68
-        && Buffer.compare(byteCode.slice(0, 4), transferABI.id) === 0
-        && Buffer.compare(byteCode.slice(4, 16), Buffer.alloc(12)) === 0
+        && byteCode.slice(0, 4).compare(transferABI.id) === 0
+        && byteCode.slice(4, 16).compare(Buffer.alloc(12)) === 0
       ) {
-        let from = item.senderData
-        let to = byteCode.slice(16, 36)
-        let value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
-        let isFrom = hexAddresses.some(address => Buffer.compare(address, from) === 0)
-        let isTo = hexAddresses.some(address => Buffer.compare(address, to) === 0)
+        const from = item.senderData
+        const to = byteCode.slice(16, 36)
+        const value = BigInt(`0x${byteCode.slice(36).toString('hex')}`)
+        const isFrom = hexAddresses.some(address => address.compare(from) === 0)
+        const isTo = hexAddresses.some(address => address.compare(to) === 0)
         if (isFrom && !isTo) {
           unconfirmed.sent += value
         } else if (!isFrom && isTo) {
@@ -291,11 +291,11 @@ class QRC20Service extends Service {
     if (addresses.length === 0) {
       return {totalCount: 0, transactions: []}
     }
-    let addressSet = new Set(addresses.map(address => address.toString('hex')))
-    let topicAddresses = addresses.map(address => Buffer.concat([Buffer.alloc(12), address]))
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
-    let logFilter = [
+    const addressSet = new Set(addresses.map(address => address.toString('hex')))
+    const topicAddresses = addresses.map(address => Buffer.concat([Buffer.alloc(12), address]))
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
+    const logFilter = [
       ...tokenAddress ? [sql`log.address = ${tokenAddress}`] : [],
       sql`log.topic1 = ${TransferABI.id}`,
       'log.topic3 IS NOT NULL',
@@ -303,7 +303,7 @@ class QRC20Service extends Service {
       sql`(log.topic2 IN ${topicAddresses} OR log.topic3 IN ${topicAddresses})`
     ].join(' AND ')
 
-    let [{totalCount}] = await db.query(sql`
+    const [{totalCount}] = await db.query(sql`
       SELECT COUNT(DISTINCT(receipt.transaction_id)) AS totalCount
       FROM evm_receipt receipt, evm_receipt_log log, qrc20
       WHERE receipt._id = log.receipt_id AND log.address = qrc20.contract_address AND ${{raw: logFilter}}
@@ -311,7 +311,7 @@ class QRC20Service extends Service {
     if (totalCount === 0) {
       return {totalCount: 0, transactions: []}
     }
-    let ids = (await db.query(sql`
+    const ids = (await db.query(sql`
       SELECT transaction_id AS id FROM evm_receipt receipt
       INNER JOIN (
         SELECT DISTINCT(receipt.transaction_id) AS id FROM evm_receipt receipt, evm_receipt_log log, qrc20
@@ -375,9 +375,9 @@ class QRC20Service extends Service {
     if (!reversed) {
       list = list.reverse()
     }
-    let initialBalanceMap = new Map()
+    const initialBalanceMap = new Map()
     if (list.length > 0) {
-      let intialBalanceList = await QRC20Balance.findAll({
+      const intialBalanceList = await QRC20Balance.findAll({
         where: {
           ...tokenAddress ? {contractAddress: tokenAddress} : {},
           address: {[$in]: addresses}
@@ -390,12 +390,12 @@ class QRC20Service extends Service {
           attributes: ['addressString']
         }]
       })
-      for (let {balance, contract} of intialBalanceList) {
-        let address = contract.addressString
+      for (const {balance, contract} of intialBalanceList) {
+        const address = contract.addressString
         initialBalanceMap.set(address, initialBalanceMap.get(address) ?? 0n + balance)
       }
-      let {blockHeight, indexInBlock} = list[0]
-      let latestLogs = await EVMReceiptLog.findAll({
+      const {blockHeight, indexInBlock} = list[0]
+      const latestLogs = await EVMReceiptLog.findAll({
         where: {
           ...tokenAddress ? {address: tokenAddress} : {},
           topic1: TransferABI.id,
@@ -424,9 +424,9 @@ class QRC20Service extends Service {
           }
         ]
       })
-      for (let log of latestLogs) {
-        let address = log.contract.addressString
-        let amount = BigInt(`0x${log.data.toString('hex')}`)
+      for (const log of latestLogs) {
+        const address = log.contract.addressString
+        const amount = BigInt(`0x${log.data.toString('hex')}`)
         let balance = initialBalanceMap.get(address) ?? 0n
         if (addressSet.has(log.topic2.slice(12).toString('hex'))) {
           balance += amount
@@ -439,7 +439,7 @@ class QRC20Service extends Service {
     }
 
     let transactions = list.map(({blockHeight, header, transaction, logs}) => {
-      let result = {
+      const result = {
         id: transaction.id,
         block: {
           hash: header.hash,
@@ -449,17 +449,17 @@ class QRC20Service extends Service {
         confirmations: this.app.blockchainInfo.tip.height - blockHeight + 1,
         tokens: []
       }
-      for (let log of logs) {
-        let address = log.contract.addressString
+      for (const log of logs) {
+        const address = log.contract.addressString
         let delta = 0n
-        let amount = BigInt(`0x${log.data.toString('hex')}`)
+        const amount = BigInt(`0x${log.data.toString('hex')}`)
         if (addressSet.has(log.topic2.slice(12).toString('hex'))) {
           delta -= amount
         }
         if (addressSet.has(log.topic3.slice(12).toString('hex'))) {
           delta += amount
         }
-        let item = result.tokens.find(token => token.address === address)
+        const item = result.tokens.find(token => token.address === address)
         if (item) {
           item.amount += delta
         } else {
@@ -473,7 +473,7 @@ class QRC20Service extends Service {
           })
         }
       }
-      for (let token of result.tokens) {
+      for (const token of result.tokens) {
         let initial = initialBalanceMap.get(token.address) ?? 0n
         token.balance = initial
         initial -= token.amount
@@ -492,11 +492,11 @@ class QRC20Service extends Service {
     const db = this.ctx.model
     const {EvmReceiptLogTag: EVMReceiptLogTag} = db
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
 
-    let totalCount = await EVMReceiptLogTag.count({where: {tag: 'qrc20_transfer'}})
-    let transactions = await db.query(sql`
+    const totalCount = await EVMReceiptLogTag.count({where: {tag: 'qrc20_transfer'}})
+    const transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
         evm_receipt.output_index AS outputIndex,
@@ -523,14 +523,14 @@ class QRC20Service extends Service {
       ORDER BY list.log_id ${{raw: order}}
     `, {type: db.QueryTypes.SELECT})
 
-    let addresses = await this.ctx.service.contract.transformHexAddresses(
+    const addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
     )
     return {
       totalCount,
       transactions: transactions.map((transaction, index) => {
-        let from = addresses[index * 2]
-        let to = addresses[index * 2 + 1]
+        const from = addresses[index * 2]
+        const to = addresses[index * 2 + 1]
         return {
           transactionId: transaction.transactionId,
           outputIndex: transaction.outputIndex,
@@ -558,17 +558,17 @@ class QRC20Service extends Service {
     const db = this.ctx.model
     const {EvmReceiptLog: EVMReceiptLog} = db
     const {sql} = this.ctx.helper
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
 
-    let totalCount = await EVMReceiptLog.count({
+    const totalCount = await EVMReceiptLog.count({
       where: {
         ...this.ctx.service.block.getBlockFilter(),
         address: contractAddress,
         topic1: TransferABI.id
       }
     })
-    let transactions = await db.query(sql`
+    const transactions = await db.query(sql`
       SELECT
         transaction.id AS transactionId,
         evm_receipt.output_index AS outputIndex,
@@ -589,14 +589,14 @@ class QRC20Service extends Service {
       ORDER BY list._id ${{raw: order}}
     `, {type: db.QueryTypes.SELECT})
 
-    let addresses = await this.ctx.service.contract.transformHexAddresses(
+    const addresses = await this.ctx.service.contract.transformHexAddresses(
       transactions.map(transaction => [transaction.topic2.slice(12), transaction.topic3.slice(12)]).flat()
     )
     return {
       totalCount,
       transactions: transactions.map((transaction, index) => {
-        let from = addresses[index * 2]
-        let to = addresses[index * 2 + 1]
+        const from = addresses[index * 2]
+        const to = addresses[index * 2 + 1]
         return {
           transactionId: transaction.transactionId,
           outputIndex: transaction.outputIndex,
@@ -616,23 +616,23 @@ class QRC20Service extends Service {
     const db = this.ctx.model
     const {Qrc20Balance: QRC20Balance} = db
     const {ne: $ne} = this.app.Sequelize.Op
-    let {limit, offset} = this.ctx.state.pagination
+    const {limit, offset} = this.ctx.state.pagination
 
-    let totalCount = await QRC20Balance.count({
+    const totalCount = await QRC20Balance.count({
       where: {contractAddress, balance: {[$ne]: Buffer.alloc(32)}}
     })
-    let list = await QRC20Balance.findAll({
+    const list = await QRC20Balance.findAll({
       where: {contractAddress, balance: {[$ne]: Buffer.alloc(32)}},
       attributes: ['address', 'balance'],
       order: [['balance', 'DESC']],
       limit,
       offset
     })
-    let addresses = await this.ctx.service.contract.transformHexAddresses(list.map(item => item.address))
+    const addresses = await this.ctx.service.contract.transformHexAddresses(list.map(item => item.address))
     return {
       totalCount,
       list: list.map(({balance}, index) => {
-        let address = addresses[index]
+        const address = addresses[index]
         return {
           ...address?.hex ? {
             address: address.hex.toString('hex'),
@@ -649,22 +649,22 @@ class QRC20Service extends Service {
     const db = this.ctx.model
     const {Qrc20: QRC20, Qrc20Statistics: QRC20Statistics} = db
     const {sql} = this.ctx.helper
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
-      let result = (await QRC20.findAll({
+      const result = (await QRC20.findAll({
         attributes: ['contractAddress'],
         order: [['contractAddress', 'ASC']],
         transaction
       })).map(({contractAddress}) => ({contractAddress, holders: 0, transactions: 0}))
-      let balanceResults = await db.query(sql`
+      const balanceResults = await db.query(sql`
         SELECT contract_address AS contractAddress, COUNT(*) AS count FROM qrc20_balance
         WHERE balance != ${Buffer.alloc(32)}
         GROUP BY contractAddress ORDER BY contractAddress ASC
       `, {type: db.QueryTypes.SELECT, transaction})
       let i = 0
-      for (let {contractAddress, count} of balanceResults) {
+      for (const {contractAddress, count} of balanceResults) {
         while (i < result.length) {
-          let comparison = Buffer.compare(contractAddress, result[i].contractAddress)
+          const comparison = contractAddress.compare(result[i].contractAddress)
           if (comparison === 0) {
             result[i].holders = count
             break
@@ -675,15 +675,15 @@ class QRC20Service extends Service {
           }
         }
       }
-      let transactionResults = await db.query(sql`
+      const transactionResults = await db.query(sql`
         SELECT address AS contractAddress, COUNT(*) AS count FROM evm_receipt_log USE INDEX (contract)
         WHERE topic1 = ${TransferABI.id}
         GROUP BY contractAddress ORDER BY contractAddress ASC
       `, {type: db.QueryTypes.SELECT, transaction})
       let j = 0
-      for (let {contractAddress, count} of transactionResults) {
+      for (const {contractAddress, count} of transactionResults) {
         while (j < result.length) {
-          let comparison = Buffer.compare(contractAddress, result[j].contractAddress)
+          const comparison = contractAddress.compare(result[j].contractAddress)
           if (comparison === 0) {
             result[j].transactions = count
             break

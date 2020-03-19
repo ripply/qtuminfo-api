@@ -4,7 +4,7 @@ class BalanceService extends Service {
   async getBalance(ids) {
     const {TransactionOutput} = this.ctx.model
     const {in: $in, gt: $gt} = this.app.Sequelize.Op
-    let result = await TransactionOutput.aggregate('value', 'SUM', {
+    const result = await TransactionOutput.aggregate('value', 'SUM', {
       where: {
         addressId: {[$in]: ids},
         blockHeight: {[$gt]: 0},
@@ -24,7 +24,7 @@ class BalanceService extends Service {
     let totalReceived
     let totalSent
     if (ids.length === 1) {
-      let [result] = await db.query(sql`
+      const [result] = await db.query(sql`
         SELECT
           SUM(CAST(GREATEST(value, 0) AS DECIMAL(24))) AS totalReceived,
           SUM(CAST(GREATEST(-value, 0) AS DECIMAL(24))) AS totalSent
@@ -33,7 +33,7 @@ class BalanceService extends Service {
       totalReceived = BigInt(result.totalReceived ?? 0)
       totalSent = BigInt(result.totalSent ?? 0)
     } else {
-      let [result] = await db.query(sql`
+      const [result] = await db.query(sql`
         SELECT
           SUM(CAST(GREATEST(value, 0) AS DECIMAL(24))) AS totalReceived,
           SUM(CAST(GREATEST(-value, 0) AS DECIMAL(24))) AS totalSent
@@ -52,7 +52,7 @@ class BalanceService extends Service {
   async getUnconfirmedBalance(ids) {
     const {TransactionOutput} = this.ctx.model
     const {in: $in} = this.app.Sequelize.Op
-    let result = await TransactionOutput.aggregate('value', 'SUM', {
+    const result = await TransactionOutput.aggregate('value', 'SUM', {
       where: {
         addressId: {[$in]: ids},
         blockHeight: 0xffffffff,
@@ -65,7 +65,7 @@ class BalanceService extends Service {
   async getStakingBalance(ids) {
     const {TransactionOutput} = this.ctx.model
     const {in: $in, gt: $gt} = this.app.Sequelize.Op
-    let result = await TransactionOutput.aggregate('value', 'SUM', {
+    const result = await TransactionOutput.aggregate('value', 'SUM', {
       where: {
         addressId: {[$in]: ids},
         blockHeight: {[$gt]: this.app.blockchainInfo.tip.height - 500},
@@ -79,7 +79,7 @@ class BalanceService extends Service {
   async getMatureBalance(ids) {
     const {TransactionOutput} = this.ctx.model
     const {in: $in, between: $between} = this.app.Sequelize.Op
-    let result = await TransactionOutput.aggregate('value', 'SUM', {
+    const result = await TransactionOutput.aggregate('value', 'SUM', {
       where: {
         addressId: {[$in]: ids},
         blockHeight: {[$between]: [1, this.app.blockchainInfo.tip.height - 500]},
@@ -97,14 +97,14 @@ class BalanceService extends Service {
     const {sql} = this.ctx.helper
     const {Header, Transaction, BalanceChange} = db
     const {in: $in, ne: $ne, gt: $gt} = this.app.Sequelize.Op
-    let {limit, offset, reversed = true} = this.ctx.state.pagination
-    let order = reversed ? 'DESC' : 'ASC'
+    const {limit, offset, reversed = true} = this.ctx.state.pagination
+    const order = reversed ? 'DESC' : 'ASC'
 
     let totalCount
     let transactionIds
     let list
     if (ids.length === 1) {
-      let valueFilter = nonZero ? {value: {[$ne]: 0}} : {}
+      const valueFilter = nonZero ? {value: {[$ne]: 0}} : {}
       totalCount = await BalanceChange.count({
         where: {
           addressId: ids[0],
@@ -144,9 +144,9 @@ class BalanceService extends Service {
         order: [['blockHeight', order], ['indexInBlock', order], ['transactionId', order]]
       })
     } else {
-      let havingFilter = nonZero ? 'SUM(value) != 0' : null
+      const havingFilter = nonZero ? 'SUM(value) != 0' : null
       if (havingFilter) {
-        let [{count}] = await db.query(sql`
+        const [{count}] = await db.query(sql`
           SELECT COUNT(*) AS count FROM (
             SELECT transaction_id FROM balance_change
             WHERE address_id IN ${ids} AND block_height > 0
@@ -207,8 +207,8 @@ class BalanceService extends Service {
     }
     let initialBalance = 0n
     if (list.length > 0) {
-      let {blockHeight, indexInBlock, transactionId} = list[0]
-      let [{value}] = await db.query(sql`
+      const {blockHeight, indexInBlock, transactionId} = list[0]
+      const [{value}] = await db.query(sql`
         SELECT SUM(value) AS value FROM balance_change
         WHERE address_id IN ${ids}
           AND (block_height, index_in_block, transaction_id) < (${blockHeight}, ${indexInBlock}, ${transactionId})
@@ -233,7 +233,7 @@ class BalanceService extends Service {
       } : {},
       amount: BigInt(item.value),
     }))
-    for (let tx of transactions) {
+    for (const tx of transactions) {
       tx.balance = initialBalance += tx.amount
     }
     if (reversed) {
@@ -246,9 +246,9 @@ class BalanceService extends Service {
     const db = this.ctx.model
     const {RichList} = db
     const {sql} = this.ctx.helper
-    let {limit, offset} = this.ctx.state.pagination
-    let totalCount = await RichList.count()
-    let list = await db.query(sql`
+    const {limit, offset} = this.ctx.state.pagination
+    const totalCount = await RichList.count()
+    const list = await db.query(sql`
       SELECT address.string AS address, rich_list.balance AS balance
       FROM (SELECT address_id FROM rich_list ORDER BY balance DESC LIMIT ${offset}, ${limit}) list
       INNER JOIN rich_list USING (address_id)
@@ -267,10 +267,10 @@ class BalanceService extends Service {
     const db = this.ctx.model
     const {Address, RichList} = db
     const {sql} = this.ctx.helper
-    let transaction = await db.transaction()
+    const transaction = await db.transaction()
     try {
       const blockHeight = this.app.blockchainInfo.tip.height
-      let list = await db.query(sql`
+      const list = await db.query(sql`
         SELECT list.address_id AS addressId, list.balance AS balance
         FROM (
           SELECT address_id, SUM(value) AS balance
@@ -302,7 +302,7 @@ class BalanceService extends Service {
     }
     const {RichList} = this.ctx.model
     const {gt: $gt} = this.app.Sequelize.Op
-    let item = await RichList.findOne({
+    const item = await RichList.findOne({
       where: {addressId: addressIds[0]},
       attributes: ['balance']
     })

@@ -4,23 +4,23 @@ class BulletinService extends Service {
   async listBulletins(count, {locale} = {}) {
     const {Bulletin, BulletinTranslation} = this.ctx.model
     const {gt: $gt} = this.app.Sequelize.Op
-    let list = await Bulletin.findAll({
+    const list = await Bulletin.findAll({
       where: {priority: {[$gt]: 0}},
       attributes: ['_id', 'locale', 'title', 'url'],
       order: [['priority', 'DESC'], ['_id', 'DESC']],
       limit: count
     })
-    let result = {default: []}
-    let locales = new Set(['default'])
-    for (let bulletin of list) {
+    const result = {default: []}
+    const locales = new Set(['default'])
+    for (const bulletin of list) {
       if (!locales.has(bulletin.locale)) {
         locales.add(bulletin.locale)
         result[bulletin.locale] = result.default.map(({title, url}) => ({title, url}))
       }
-      for (let locale of locales) {
+      for (const locale of locales) {
         result[locale].push({title: bulletin.title, url: bulletin.url})
       }
-      for (let translation of await BulletinTranslation.findAll({
+      for (const translation of await BulletinTranslation.findAll({
         where: {bulletinId: bulletin._id},
         attributes: ['locale', 'title', 'url']
       })) {

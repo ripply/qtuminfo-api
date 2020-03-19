@@ -1,7 +1,7 @@
 module.exports = app => {
   const {BIGINT} = app.Sequelize
 
-  let RichList = app.model.define('rich_list', {
+  const RichList = app.model.define('rich_list', {
     addressId: {
       type: BIGINT.UNSIGNED,
       primaryKey: true
@@ -9,7 +9,7 @@ module.exports = app => {
     balance: {
       type: BIGINT,
       get() {
-        let balance = this.getDataValue('balance')
+        const balance = this.getDataValue('balance')
         return balance == null ? null : BigInt(balance)
       },
       set(balance) {

@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT, CHAR, STRING, BLOB} = app.Sequelize
 
-  let EVMReceiptLog = app.model.define('evm_receipt_log', {
+  const EVMReceiptLog = app.model.define('evm_receipt_log', {
     _id: {
       type: BIGINT.UNSIGNED,
       field: '_id',

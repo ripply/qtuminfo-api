@@ -2,11 +2,10 @@ const {Controller} = require('egg')
 
 class CaptchaController extends Controller {
   async create() {
-    const {ctx} = this
-    let captcha = await ctx.service.captcha.createCaptcha()
-    ctx.session.captcha = captcha.text
-    ctx.response.type = 'image/svg+xml'
-    ctx.body = captcha.data
+    const captcha = await this.ctx.service.captcha.createCaptcha()
+    this.ctx.session.captcha = captcha.text
+    this.ctx.response.type = 'image/svg+xml'
+    this.ctx.body = captcha.data
   }
 }
 

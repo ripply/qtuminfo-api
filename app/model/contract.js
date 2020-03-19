@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, BIGINT, CHAR, ENUM} = app.Sequelize
 
-  let Contract = app.model.define('contract', {
+  const Contract = app.model.define('contract', {
     address: {
       type: CHAR(20).BINARY,
       primaryKey: true

@@ -22,7 +22,7 @@ const addressTypeMap = {
 module.exports = app => {
   const {INTEGER, BIGINT, CHAR, STRING, TEXT} = app.Sequelize
 
-  let EVMReceipt = app.model.define('evm_receipt', {
+  const EVMReceipt = app.model.define('evm_receipt', {
     _id: {
       type: BIGINT.UNSIGNED,
       field: '_id',
@@ -42,7 +42,7 @@ module.exports = app => {
     senderType: {
       type: INTEGER(3).UNSIGNED,
       get() {
-        let senderType = this.getDataValue('senderType')
+        const senderType = this.getDataValue('senderType')
         return addressTypeMap[senderType] ?? null
       },
       set(senderType) {

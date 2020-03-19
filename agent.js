@@ -4,7 +4,7 @@ module.exports = function(agent) {
   let tip = null
 
   agent.messenger.on('egg-ready', () => {
-    let io = SocketClient(`http://localhost:${agent.config.qtuminfo.port}`)
+    const io = SocketClient(`http://localhost:${agent.config.qtuminfo.port}`)
     io.on('tip', newTip => {
       tip = newTip
       agent.messenger.sendToApp('block-tip', tip)
@@ -35,7 +35,7 @@ module.exports = function(agent) {
 
   let lastTipHash = Buffer.alloc(0)
   function updateStatistics() {
-    if (tip && Buffer.compare(lastTipHash, tip.hash) !== 0) {
+    if (tip && lastTipHash.compare(tip.hash) !== 0) {
       agent.messenger.sendRandom('update-richlist')
       agent.messenger.sendRandom('update-qrc20-statistics')
       agent.messenger.sendRandom('update-qrc721-statistics')
@@ -53,7 +53,7 @@ module.exports = function(agent) {
   })
 
   agent.messenger.on('egg-ready', () => {
-    let interval = setInterval(() => {
+    const interval = setInterval(() => {
       if (tip) {
         agent.messenger.sendToApp('blockchain-info', {tip})
         clearInterval(interval)

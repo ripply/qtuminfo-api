@@ -3,7 +3,7 @@ const Sequelize = require('sequelize')
 module.exports = app => {
   const {INTEGER, STRING, JSON, DATE} = app.Sequelize
 
-  let QtuminfoTranslation = app.model.define('qtuminfo_translation', {
+  const QtuminfoTranslation = app.model.define('qtuminfo_translation', {
     _id: {
       type: INTEGER.UNSIGNED,
       field: '_id',

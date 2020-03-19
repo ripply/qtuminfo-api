@@ -5,16 +5,16 @@ module.exports = () => async function address(ctx, next) {
   const {Address} = ctx.model
   const {in: $in} = ctx.app.Sequelize.Op
 
-  let addresses = ctx.params.address.split(',')
-  let rawAddresses = []
-  for (let address of addresses) {
+  const addresses = ctx.params.address.split(',')
+  const rawAddresses = []
+  for (const address of addresses) {
     try {
       rawAddresses.push(RawAddress.fromString(address, chain))
     } catch (err) {
       ctx.throw(400)
     }
   }
-  let result = await Address.findAll({
+  const result = await Address.findAll({
     where: {string: {[$in]: addresses}},
     attributes: ['_id', 'type', 'data']
   })

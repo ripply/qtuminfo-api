@@ -1,7 +1,7 @@
 module.exports = app => {
   const {INTEGER, CHAR, STRING, JSON, ENUM} = app.Sequelize
 
-  let EVMFunctionABI = app.model.define('evm_function_abi', {
+  const EVMFunctionABI = app.model.define('evm_function_abi', {
     _id: {
       type: INTEGER.UNSIGNED,
       field: '_id',
