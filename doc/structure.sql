@@ -234,7 +234,6 @@ CREATE TABLE `qrc20` (
   `symbol` blob NOT NULL,
   `decimals` tinyint(3) unsigned NOT NULL,
   `total_supply` binary(32) NOT NULL,
-  `version` blob,
   PRIMARY KEY (`contract_address`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 

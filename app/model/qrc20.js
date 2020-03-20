@@ -39,17 +39,6 @@ module.exports = app => {
           Buffer.from(totalSupply.toString(16).padStart(64, '0'), 'hex')
         )
       }
-    },
-    version: {
-      type: BLOB,
-      allowNull: true,
-      get() {
-        const version = this.getDataValue('version')
-        return version == null ? null : version.toString()
-      },
-      set(version) {
-        this.setDataValue('version', Buffer.from(version))
-      }
     }
   }, {freezeTableName: true, underscored: true, timestamps: false})
 

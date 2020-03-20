@@ -5,7 +5,7 @@ class QRC20Service extends Service {
     const {Qrc20: QRC20, Qrc20Statistics: QRC20Statistics} = this.ctx.model
     const qrc20 = await QRC20.findOne({
       where: {contractAddress},
-      attributes: ['name', 'symbol', 'decimals', 'totalSupply', 'version'],
+      attributes: ['name', 'symbol', 'decimals', 'totalSupply'],
       include: [{
         model: QRC20Statistics,
         as: 'statistics',
@@ -19,7 +19,6 @@ class QRC20Service extends Service {
       symbol: qrc20.symbol,
       decimals: qrc20.decimals,
       totalSupply: qrc20.totalSupply,
-      version: qrc20.version,
       holders: qrc20.statistics.holders,
       transactions: qrc20.statistics.transactions
     }
@@ -37,7 +36,6 @@ class QRC20Service extends Service {
       SELECT
         contract.address_string AS address, contract.address AS addressHex,
         qrc20.name AS name, qrc20.symbol AS symbol, qrc20.decimals AS decimals, qrc20.total_supply AS totalSupply,
-        qrc20.version AS version,
         list.holders AS holders,
         list.transactions AS transactions
       FROM (
@@ -60,7 +58,6 @@ class QRC20Service extends Service {
         symbol: item.symbol.toString(),
         decimals: item.decimals,
         totalSupply: BigInt(`0x${item.totalSupply.toString('hex')}`),
-        version: item.version?.toString(),
         holders: item.holders,
         transactions: item.transactions
       }))
