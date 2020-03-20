@@ -12,7 +12,7 @@ class TransactionService extends Service {
     const {in: $in} = this.app.Sequelize.Op
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
-    const cache = this.ctx.service.cache.getLRUCache('transaction')
+    // const cache = this.ctx.service.cache.getLRUCache('transaction')
     const transaction = await Transaction.findOne({
       where: {id},
       include: [
@@ -37,19 +37,19 @@ class TransactionService extends Service {
       ]
     })
     if (!transaction) {
-      await cache.del(id.toString('hex'))
+      // await cache.del(id.toString('hex'))
       return null
     }
-    const cachedTransaction = await cache.get(id.toString('hex'))
-    if (cachedTransaction) {
-      if (transaction.header) {
-        cachedTransaction.blockHash = transaction.header.hash.toString('hex')
-        cachedTransaction.blockHeight = transaction.blockHeight
-        cachedTransaction.timestamp = transaction.header.timestamp
-        cachedTransaction.confirmations = this.app.blockchainInfo.tip.height - cachedTransaction.blockHeight + 1
-      }
-      return cachedTransaction
-    }
+    // const cachedTransaction = await cache.get(id.toString('hex'))
+    // if (cachedTransaction) {
+    //   if (transaction.header) {
+    //     cachedTransaction.blockHash = transaction.header.hash.toString('hex')
+    //     cachedTransaction.blockHeight = transaction.blockHeight
+    //     cachedTransaction.timestamp = transaction.header.timestamp
+    //     cachedTransaction.confirmations = this.app.blockchainInfo.tip.height - cachedTransaction.blockHeight + 1
+    //   }
+    //   return cachedTransaction
+    // }
 
     const witnesses = await Witness.findAll({
       where: {transactionId: id},
@@ -431,7 +431,7 @@ class TransactionService extends Service {
       size: transaction.size,
       weight: transaction.weight
     })
-    await cache.set(id.toString('hex'), result)
+    // await cache.set(id.toString('hex'), result)
     return result
   }
 
@@ -716,6 +716,7 @@ class TransactionService extends Service {
   async transformOutput(output) {
     const {OutputScript, Solidity} = this.app.qtuminfo.lib
     const db = this.ctx.model
+    const {Contract, ContractCode} = db
     const {sql} = this.ctx.helper
     const scriptPubKey = OutputScript.fromBuffer(output.scriptPubKey)
     const type = scriptPubKey.isEmpty() ? 'empty' : scriptPubKey.type
@@ -746,12 +747,53 @@ class TransactionService extends Service {
         createdContracts: output.evmReceipt.createdContracts.map(({addressHex}) => addressHex.toString('hex')),
         destructedContracts: output.evmReceipt.destructedContracts.map(({addressHex}) => addressHex.toString('hex'))
       }
-      if ([OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
+      if ([OutputScript.EVM_CONTRACT_CREATE, OutputScript.EVM_CONTRACT_CREATE_SENDER].includes(scriptPubKey.type)) {
+        const abiList = await db.query(sql`
+          SELECT inputs, state_mutability, contract_tag FROM evm_function_abi
+          WHERE id IS NULL AND type = 'constructor' AND (
+            contract_address = ${output.evmReceipt.contractAddressHex} OR contract_tag IN (
+              SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
+            )
+          )
+        `, {type: db.QueryTypes.SELECT})
+        if (abiList.length) {
+          const {code} = await ContractCode.findOne({
+            attributes: ['code'],
+            include: [{
+              model: Contract,
+              as: 'contract',
+              required: true,
+              where: {address: output.addressHex},
+              attributes: []
+            }]
+          })
+          const offset = scriptPubKey.byteCode.indexOf(code)
+          const byteCode = scriptPubKey.byteCode.slice(offset + code.length)
+          for (const {inputs, state_mutability: stateMutability, contract_tag: tag} of abiList) {
+            try {
+              const abi = new Solidity.MethodABI({type: 'constuctor', inputs, stateMutability})
+              const abiResult = abi.decodeInputs(byteCode)
+              result.receipt.abi = {
+                tag,
+                type: 'constructor',
+                name: '',
+                inputs: inputs.map((input, index) => ({
+                  name: input.name,
+                  type: input.type,
+                  value: this.decodeSolitityParameter(input.type, abiResult[index])
+                })),
+                stateMutability
+              }
+              break
+            } catch (err) {}
+          }
+        }
+      } else if ([OutputScript.EVM_CONTRACT_CALL, OutputScript.EVM_CONTRACT_CALL_SENDER].includes(scriptPubKey.type)) {
         const byteCode = scriptPubKey.byteCode
         if (byteCode.compare(Buffer.alloc(1)) === 0) {
           const abiList = await db.query(sql`
             SELECT state_mutability, contract_tag FROM evm_function_abi
-            WHERE id = ${Buffer.alloc(4)} AND type = 'fallback' AND (
+            WHERE id IS NULL AND type = 'fallback' AND (
               contract_address = ${output.evmReceipt.contractAddressHex} OR contract_tag IN (
                 SELECT tag FROM contract_tag WHERE contract_address = ${output.evmReceipt.contractAddressHex}
               )

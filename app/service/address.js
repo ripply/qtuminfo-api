@@ -187,7 +187,6 @@ class AddressService extends Service {
   }
 
   async getAddressContractTransactions(rawAddresses, contract) {
-    console.log(rawAddresses, contract)
     const db = this.ctx.model
     const {Address} = db
     const {sql} = this.ctx.helper
@@ -356,7 +355,6 @@ class AddressService extends Service {
         || byteCode.slice(0, 4).compare(transferABI.id) !== 0
         || byteCode.slice(4, 16).compare(Buffer.alloc(12)) !== 0
       ) {
-        console.log(byteCode.length, byteCode.slice(4, 16).toString('hex'))
         return false
       }
       const from = transaction.senderData

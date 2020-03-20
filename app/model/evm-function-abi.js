@@ -8,10 +8,13 @@ module.exports = app => {
       primaryKey: true,
       autoIncrement: true
     },
-    id: CHAR(4).BINARY,
+    id: {
+      type: CHAR(4).BINARY,
+      allowNull: true
+    },
     type: {
       type: ENUM,
-      values: ['function', 'constructor', 'fallback', '']
+      values: ['function', 'constructor', 'fallback']
     },
     name: STRING(255),
     inputs: JSON,

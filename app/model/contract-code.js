@@ -2,8 +2,8 @@ module.exports = app => {
   const {CHAR, BLOB, TEXT} = app.Sequelize
 
   const ContractCode = app.model.define('contract_code', {
-    contractAddress: {
-      type: CHAR(20).BINARY,
+    sha256sum: {
+      type: CHAR(32).BINARY,
       primaryKey: true
     },
     code: BLOB,
@@ -15,8 +15,8 @@ module.exports = app => {
 
   ContractCode.associate = () => {
     const {Contract} = app.model
-    Contract.hasOne(ContractCode, {as: 'code', foreignKey: 'contractAddress'})
-    ContractCode.belongsTo(Contract, {as: 'contract', foreignKey: 'contractAddress'})
+    Contract.hasOne(ContractCode, {as: 'code', foreignKey: 'sha256sum', sourceKey: 'sha256Code'})
+    ContractCode.belongsTo(Contract, {as: 'contract', foreignKey: 'sha256sum', targetKey: 'sha256Code'})
   }
 
   return ContractCode
