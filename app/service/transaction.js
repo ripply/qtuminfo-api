@@ -12,7 +12,7 @@ class TransactionService extends Service {
     const {in: $in} = this.app.Sequelize.Op
     const {Address: RawAddress} = this.app.qtuminfo.lib
 
-    // const cache = this.ctx.service.cache.getLRUCache('transaction')
+    const cache = this.ctx.service.cache.getLRUCache('transaction')
     const transaction = await Transaction.findOne({
       where: {id},
       include: [
@@ -37,19 +37,19 @@ class TransactionService extends Service {
       ]
     })
     if (!transaction) {
-      // await cache.del(id.toString('hex'))
+      await cache.del(id.toString('hex'))
       return null
     }
-    // const cachedTransaction = await cache.get(id.toString('hex'))
-    // if (cachedTransaction) {
-    //   if (transaction.header) {
-    //     cachedTransaction.blockHash = transaction.header.hash.toString('hex')
-    //     cachedTransaction.blockHeight = transaction.blockHeight
-    //     cachedTransaction.timestamp = transaction.header.timestamp
-    //     cachedTransaction.confirmations = this.app.blockchainInfo.tip.height - cachedTransaction.blockHeight + 1
-    //   }
-    //   return cachedTransaction
-    // }
+    const cachedTransaction = await cache.get(id.toString('hex'))
+    if (cachedTransaction) {
+      if (transaction.header) {
+        cachedTransaction.blockHash = transaction.header.hash.toString('hex')
+        cachedTransaction.blockHeight = transaction.blockHeight
+        cachedTransaction.timestamp = transaction.header.timestamp
+        cachedTransaction.confirmations = this.app.blockchainInfo.tip.height - cachedTransaction.blockHeight + 1
+      }
+      return cachedTransaction
+    }
 
     const witnesses = await Witness.findAll({
       where: {transactionId: id},
@@ -431,7 +431,7 @@ class TransactionService extends Service {
       size: transaction.size,
       weight: transaction.weight
     })
-    // await cache.set(id.toString('hex'), result)
+    await cache.set(id.toString('hex'), result)
     return result
   }
 
