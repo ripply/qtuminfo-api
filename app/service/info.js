@@ -49,13 +49,7 @@ class InfoService extends Service {
   }
 
   getCirculatingSupply() {
-    const height = this.app.blockchainInfo.tip.height
-    const totalSupply = this.getTotalSupply(height)
-    if (this.app.chain.name === 'mainnet') {
-      return totalSupply - 575e4
-    } else {
-      return totalSupply
-    }
+    return this.getTotalSupply()
   }
 
   async getBlockTime() {
