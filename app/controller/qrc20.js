@@ -16,6 +16,13 @@ class QRC20Controller extends Controller {
     }
   }
 
+  async circulatingSupply() {
+    this.ctx.assert(this.ctx.params.token === 'f2033ede578e17fa6231047265010445bca8cf1c', 404)
+    this.ctx.assert(this.ctx.state.token.type === 'qrc20', 404)
+    const circulation = await this.ctx.service.qrc20.getQRC20CirculatingSupply(this.ctx.state.token.contractAddress)
+    this.ctx.body = {circulation}
+  }
+
   async list() {
     const {totalCount, tokens} = await this.ctx.service.qrc20.listQRC20Tokens()
     this.ctx.body = {

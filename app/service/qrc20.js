@@ -24,6 +24,22 @@ class QRC20Service extends Service {
     }
   }
 
+  async getQRC20CirculatingSupply(contractAddress) {
+    const {Qrc20: QRC20, Qrc20Balance: QRC20Balance} = this.ctx.model
+    const qrc20 = await QRC20.findOne({
+      where: {contractAddress},
+      attributes: ['decimals', 'totalSupply']
+    })
+    const {balance} = await QRC20Balance.findOne({
+      where: {
+        contractAddress,
+        address: Buffer.from('27813dfc39dee247fa191e27eaf6d63217a71b48', 'hex')
+      },
+      attributes: ['balance']
+    })
+    return Number(qrc20.totalSupply - balance) / 10 ** qrc20.decimals
+  }
+
   async listQRC20Tokens() {
     const db = this.ctx.model
     const {Qrc20Statistics: QRC20Statistics} = db

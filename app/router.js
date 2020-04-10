@@ -181,6 +181,11 @@ module.exports = app => {
     controller.qrc20.summary
   )
   router.get(
+    '/qrc20/:token/circulating-supply',
+    middleware.contract('token'),
+    controller.qrc20.circulatingSupply
+  )
+  router.get(
     '/qrc20/:token/txs',
     middleware.contract('token'), paginationMiddleware, blockFilterMiddleware,
     controller.qrc20.transactions
