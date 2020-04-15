@@ -1,3 +1,4 @@
+const CoinGecko = require('coingecko-api')
 const {Service} = require('egg')
 
 class MiscService extends Service {
@@ -9,7 +10,7 @@ class MiscService extends Service {
     const {sql} = this.ctx.helper
 
     if (/^(0|[1-9]\d{0,9})$/.test(id)) {
-      let height = Number.parseInt(id)
+      const height = Number.parseInt(id)
       if (height <= this.app.blockchainInfo.tip.height) {
         return {type: 'block'}
       }
@@ -29,9 +30,9 @@ class MiscService extends Service {
     }
 
     try {
-      let address = Address.fromString(id, this.app.chain)
+      const address = Address.fromString(id, this.app.chain)
       if ([Address.CONTRACT, Address.EVM_CONTRACT].includes(address.type)) {
-        let contract = await Contract.findOne({
+        const contract = await Contract.findOne({
           where: {address: address.data},
           attributes: ['address']
         })
@@ -68,7 +69,7 @@ class MiscService extends Service {
       })).map(qrc20 => qrc20.contractAddress)
     }
     if (qrc20Results.length) {
-      let [{addressHex}] = await db.query(sql`
+      const [{addressHex}] = await db.query(sql`
         SELECT contract.address_string AS address, contract.address AS addressHex FROM (
           SELECT contract_address FROM qrc20_statistics
           WHERE contract_address IN ${qrc20Results}
@@ -104,7 +105,7 @@ class MiscService extends Service {
       })).map(qrc721 => qrc721.contractAddress)
     }
     if (qrc721Results.length) {
-      let [{addressHex}] = await db.query(sql`
+      const [{addressHex}] = await db.query(sql`
         SELECT contract.address_string AS address, contract.address AS addressHex FROM (
           SELECT contract_address FROM qrc721_statistics
           WHERE contract_address IN ${qrc721Results}
@@ -122,44 +123,24 @@ class MiscService extends Service {
     return {}
   }
 
+  /* eslint-disable camelcase */
   async getPrices() {
-    let apiKey = this.app.config.cmcAPIKey
-    if (!apiKey) {
-      return {}
-    }
-    const coinId = 1684
-    let [USDResult, CNYResult] = await Promise.all([
-      this.ctx.curl('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
-        headers: {
-          'X-CMC_PRO_API_KEY': apiKey,
-          Accept: 'application/json'
-        },
-        data: {
-          id: coinId,
-          convert: 'USD'
-        },
-        dataType: 'json'
-      }),
-      this.ctx.curl('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
-        headers: {
-          'X-CMC_PRO_API_KEY': apiKey,
-          Accept: 'application/json'
-        },
-        data: {
-          id: coinId,
-          convert: 'CNY'
-        },
-        dataType: 'json'
-      })
-    ])
+    const result = await new CoinGecko().coins.fetch('qtum', {
+      tickers: false,
+      community_data: false,
+      developer_data: false,
+      localization: false
+    })
+    const currentPrice = result.data.market_data.current_price
     return {
-      USD: USDResult.data.data[coinId].quote.USD.price,
-      CNY: CNYResult.data.data[coinId].quote.CNY.price
+      USD: currentPrice.usd,
+      CNY: currentPrice.cny
     }
   }
+  /* eslint-enable camelcase */
 
   async getFullNodes() {
-    let {status, data} = await this.ctx.curl('https://nodes.qtum.org/api/nodes', {dataType: 'json'})
+    const {status, data} = await this.ctx.curl('https://nodes.qtum.org/api/nodes', {dataType: 'json'})
     if (status === 200) {
       return data.map(item => item.count).reduce((x, y) => x + y)
     }

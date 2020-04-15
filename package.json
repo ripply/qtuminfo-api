@@ -8,6 +8,7 @@
     "lint": "eslint --ext .js app config"
   },
   "dependencies": {
+    "coingecko-api": "^1.0.10",
     "egg": "^2.26.0",
     "egg-cors": "^2.2.3",
     "egg-redis": "^2.4.0",
@@ -15,10 +16,10 @@
     "egg-sequelize": "^5.2.1",
     "egg-session-redis": "^2.1.0",
     "egg-socket.io": "^4.1.5",
-    "ioredis": "^4.16.0",
+    "ioredis": "^4.16.2",
     "koa-ratelimit": "^4.2.1",
     "mysql2": "^2.1.0",
-    "nodemailer": "^6.4.5",
+    "nodemailer": "^6.4.6",
     "redis-lru": "^0.6.0",
     "socket.io-client": "^2.3.0",
     "svg-captcha": "^1.4.0"

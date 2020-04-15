@@ -3,7 +3,7 @@ const {Subscription} = require('egg')
 class UpdatePriceSubscription extends Subscription {
   static get schedule() {
     return {
-      cron: '0 * * * *',
+      cron: '*/5 * * * *',
       type: 'worker'
     }
   }
