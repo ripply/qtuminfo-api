@@ -53,6 +53,10 @@ module.exports = app => {
     return this.stakePrevTxId.compare(Buffer.alloc(32)) !== 0 && this.stakeOutputIndex !== 0xffffffff
   }
 
+  Header.prototype.isProofOfDelegation = function isProofOfDelegation() {
+    return this.isProofOfStake() && this.signature.length === 130
+  }
+
   Header.associate = () => {
     Header.hasOne(Header, {as: 'prevHeader', foreignKey: 'height'})
     Header.hasOne(Header, {as: 'nextHeader', foreignKey: 'height'})

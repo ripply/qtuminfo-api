@@ -13,6 +13,10 @@ module.exports = app => {
     size: INTEGER.UNSIGNED,
     weight: INTEGER.UNSIGNED,
     minerId: BIGINT.UNSIGNED,
+    delegatorId: {
+      type: BIGINT.UNSIGNED,
+      allowNull: true
+    },
     txs: INTEGER.UNSIGNED,
     transactionsCount: INTEGER.UNSIGNED,
     contractTransactionsCount: INTEGER.UNSIGNED,
