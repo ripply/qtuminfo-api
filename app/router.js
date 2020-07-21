@@ -228,6 +228,7 @@ module.exports = app => {
     controller.misc.biggestMiners
   )
   router.get('/misc/prices', controller.misc.prices)
+  router.post('/misc/verify-message', controller.misc.verifyMessage)
 
   router.get('/stats/24h', controller.statistics.info)
   router.get('/stats/daily-transactions', controller.statistics.dailyTransactions)

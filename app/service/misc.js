@@ -145,6 +145,11 @@ class MiscService extends Service {
       return data.map(item => item.count).reduce((x, y) => x + y)
     }
   }
+
+  async verifymessage(address, message, signature) {
+    const client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
+    return await client.verifymessage(address, signature, message)
+  }
 }
 
 module.exports = MiscService

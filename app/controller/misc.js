@@ -38,6 +38,11 @@ class MiscController extends Controller {
   async prices() {
     this.ctx.body = await this.ctx.service.cache.getCache('qtum-price')
   }
+
+  async verifyMessage() {
+    const {address, message, signature} = this.ctx.request.body
+    this.ctx.body = await this.ctx.service.misc.verifyMessage(address, message, signature)
+  }
 }
 
 module.exports = MiscController
