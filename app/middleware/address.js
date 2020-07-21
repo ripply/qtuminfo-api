@@ -4,16 +4,9 @@ module.exports = () => async function address(ctx, next) {
   const chain = ctx.app.chain
   const {Address} = ctx.model
   const {in: $in} = ctx.app.Sequelize.Op
-
   const addresses = ctx.params.address.split(',')
-  const rawAddresses = []
-  for (const address of addresses) {
-    try {
-      rawAddresses.push(RawAddress.fromString(address, chain))
-    } catch (err) {
-      ctx.throw(400)
-    }
-  }
+  const rawAddresses = addresses.map(address => RawAddress.fromString(address, chain))
+  ctx.assert(rawAddresses.every(Boolean), 400)
   const result = await Address.findAll({
     where: {string: {[$in]: addresses}},
     attributes: ['_id', 'type', 'data']
