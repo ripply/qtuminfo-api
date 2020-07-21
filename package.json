@@ -9,24 +9,24 @@
   },
   "dependencies": {
     "coingecko-api": "^1.0.10",
-    "egg": "^2.26.0",
+    "egg": "^2.27.0",
     "egg-cors": "^2.2.3",
     "egg-redis": "^2.4.0",
     "egg-scripts": "^2.13.0",
-    "egg-sequelize": "^5.2.1",
+    "egg-sequelize": "^5.2.2",
     "egg-session-redis": "^2.1.0",
     "egg-socket.io": "^4.1.5",
-    "ioredis": "^4.16.2",
+    "ioredis": "^4.17.3",
     "koa-ratelimit": "^4.2.1",
     "mysql2": "^2.1.0",
-    "nodemailer": "^6.4.6",
+    "nodemailer": "^6.4.10",
     "redis-lru": "^0.6.0",
     "socket.io-client": "^2.3.0",
     "svg-captcha": "^1.4.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "egg-bin": "^4.14.1",
-    "eslint": "^6.8.0"
+    "egg-bin": "^4.15.0",
+    "eslint": "^7.5.0"
   }
 }
