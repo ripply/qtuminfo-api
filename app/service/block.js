@@ -31,11 +31,19 @@ class BlockService extends Service {
         as: 'block',
         required: true,
         attributes: ['size', 'weight'],
-        include: [{
-          model: Address,
-          as: 'miner',
-          attributes: ['string']
-        }]
+        include: [
+          {
+            model: Address,
+            as: 'miner',
+            attributes: ['string']
+          },
+          {
+            model: Address,
+            as: 'delegator',
+            required: false,
+            attributes: ['string']
+          }
+        ]
       }]
     })
     if (!result) {
@@ -79,6 +87,7 @@ class BlockService extends Service {
       weight: result.block.weight,
       transactions: transactions.map(tx => tx.id),
       miner: result.block.miner.string,
+      delegator: result.block.delegator?.string,
       difficulty: result.difficulty,
       reward,
       confirmations: this.app.blockchainInfo.tip.height - result.height + 1

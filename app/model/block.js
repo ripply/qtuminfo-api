@@ -40,6 +40,8 @@ module.exports = app => {
     Block.belongsTo(Header, {as: 'header', foreignKey: 'height'})
     Address.hasOne(Block, {as: 'minedBlocks', foreignKey: 'minerId'})
     Block.belongsTo(Address, {as: 'miner', foreignKey: 'minerId'})
+    Address.hasOne(Block, {as: 'delegatedBlocks', foreignKey: 'delegatorId'})
+    Block.belongsTo(Address, {as: 'delegator', foreignKey: 'delegatorId'})
   }
 
   return Block

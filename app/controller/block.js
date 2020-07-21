@@ -37,6 +37,7 @@ class BlockController extends Controller {
       weight: block.weight,
       transactions: block.transactions.map(id => id.toString('hex')),
       miner: block.miner,
+      delegator: block.delegator,
       difficulty: block.difficulty,
       reward: block.reward.toString(),
       confirmations: this.app.blockchainInfo.tip.height - block.height + 1
