@@ -37,7 +37,11 @@ class AddressController extends Controller {
       })),
       ranking: summary.ranking,
       transactionCount: summary.transactionCount,
-      blocksMined: summary.blocksMined
+      blocksMined: summary.blocksMined,
+      ...summary.delegationState ? {
+        superStaker: summary.delegationState.staker.toString(),
+        fee: summary.delegationState.fee
+      } : {}
     }
   }
 

@@ -16,7 +16,8 @@ class AddressService extends Service {
       qrc721Balances,
       ranking,
       blocksMined,
-      transactionCount
+      transactionCount,
+      delegationState
     ] = await Promise.all([
       balanceService.getTotalBalanceChanges(addressIds),
       balanceService.getUnconfirmedBalance(addressIds),
@@ -27,6 +28,7 @@ class AddressService extends Service {
       balanceService.getBalanceRanking(addressIds),
       Block.count({where: {minerId: {[$in]: p2pkhAddressIds}, height: {[$gt]: 0}}}),
       this.getAddressTransactionCount(addressIds, rawAddresses),
+      this.getAddressDelegationState(rawAddresses[0])
     ])
     return {
       balance: totalReceived - totalSent,
@@ -39,7 +41,8 @@ class AddressService extends Service {
       qrc721Balances,
       ranking,
       transactionCount,
-      blocksMined
+      blocksMined,
+      delegationState
     }
   }
 
@@ -419,6 +422,29 @@ class AddressService extends Service {
       blockHeight: utxo.blockHeight,
       confirmations: utxo.blockHeight === 0xffffffff ? 0 : blockHeight - utxo.blockHeight + 1
     }))
+  }
+
+  async getAddressDelegationState(rawAddress) {
+    const {Address} = this.app.qtuminfo.lib
+    const {EvmReceiptLog: EVMReceiptLog} = this.ctx.model
+    if (rawAddress.type !== Address.PAY_TO_PUBLIC_KEY_HASH) {
+      return null
+    }
+    const state = await EVMReceiptLog.findOne({
+      where: {
+        address: Buffer.from('0000000000000000000000000000000000000086', 'hex'),
+        topic3: Buffer.concat([Buffer.alloc(12), rawAddress.data])
+      },
+      attributes: ['topic1', 'topic2', 'data'],
+      order: [['_id', 'DESC']]
+    })
+    if (state == null || state.topic1.compare(Buffer.from('7fe28d2d0b16cf95b5ea93f4305f89133b3892543e616381a1336fc1e7a01fa0', 'hex')) === 0) {
+      return null
+    }
+    return {
+      staker: new Address({type: Address.PAY_TO_PUBLIC_KEY_HASH, data: state.topic2.slice(12), chain: this.app.chain}),
+      fee: state.data[31]
+    }
   }
 }
 
