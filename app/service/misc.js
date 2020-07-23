@@ -146,7 +146,7 @@ class MiscService extends Service {
     }
   }
 
-  async verifymessage(address, message, signature) {
+  async verifyMessage(address, message, signature) {
     const client = new this.app.qtuminfo.rpc(this.app.config.qtuminfo.rpc)
     return await client.verifymessage(address, signature, message)
   }

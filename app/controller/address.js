@@ -41,8 +41,8 @@ class AddressController extends Controller {
       ...summary.delegationState
         ? {superStaker: summary.delegationState.staker.toString(), fee: summary.delegationState.fee}
         : {},
-      ...summary.delegators.length
-        ? {delegators: summary.delegators.map(delegator => ({address: delegator.address.toString(), fee: delegator.fee}))}
+      ...summary.delegations.length
+        ? {delegations: summary.delegations.map(delegation => ({delegator: delegation.delegator.toString(), fee: delegation.fee}))}
         : {}
     }
   }

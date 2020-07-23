@@ -18,7 +18,7 @@ class AddressService extends Service {
       blocksMined,
       transactionCount,
       delegationState,
-      delegators
+      delegations
     ] = await Promise.all([
       balanceService.getTotalBalanceChanges(addressIds),
       balanceService.getUnconfirmedBalance(addressIds),
@@ -30,7 +30,7 @@ class AddressService extends Service {
       Block.count({where: {minerId: {[$in]: p2pkhAddressIds}, height: {[$gt]: 0}}}),
       this.getAddressTransactionCount(addressIds, rawAddresses),
       this.getAddressDelegationState(rawAddresses[0]),
-      this.getAddressDelegators(rawAddresses[0])
+      this.getAddressDelegations(rawAddresses[0])
     ])
     return {
       balance: totalReceived - totalSent,
@@ -45,7 +45,7 @@ class AddressService extends Service {
       transactionCount,
       blocksMined,
       delegationState,
-      delegators
+      delegations
     }
   }
 
@@ -450,7 +450,7 @@ class AddressService extends Service {
     }
   }
 
-  async getAddressDelegators(rawAddress) {
+  async getAddressDelegations(rawAddress) {
     const {Address} = this.app.qtuminfo.lib
     const db = this.ctx.model
     const {sql} = this.ctx.helper
@@ -458,10 +458,10 @@ class AddressService extends Service {
       return null
     }
     const list = await db.query(sql`
-      SELECT log.topic3 AS delegator, log.data AS data FROM (
+      SELECT log.topic3 AS topic3, log.data AS data FROM (
         SELECT topic3, MAX(_id) AS _id FROM evm_receipt_log
         WHERE address = ${Buffer.from('0000000000000000000000000000000000000086', 'hex')}
-          AND topic2 = ${Buffer.concat([Buffer.alloc(12), rawAddress])}
+          AND topic2 = ${Buffer.concat([Buffer.alloc(12), rawAddress.data])}
         GROUP BY topic3
       ) list
       INNER JOIN evm_receipt_log log ON log._id = list._id
