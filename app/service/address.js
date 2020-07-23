@@ -17,7 +17,8 @@ class AddressService extends Service {
       ranking,
       blocksMined,
       transactionCount,
-      delegationState
+      delegationState,
+      delegators
     ] = await Promise.all([
       balanceService.getTotalBalanceChanges(addressIds),
       balanceService.getUnconfirmedBalance(addressIds),
@@ -28,7 +29,8 @@ class AddressService extends Service {
       balanceService.getBalanceRanking(addressIds),
       Block.count({where: {minerId: {[$in]: p2pkhAddressIds}, height: {[$gt]: 0}}}),
       this.getAddressTransactionCount(addressIds, rawAddresses),
-      this.getAddressDelegationState(rawAddresses[0])
+      this.getAddressDelegationState(rawAddresses[0]),
+      this.getAddressDelegators(rawAddresses[0])
     ])
     return {
       balance: totalReceived - totalSent,
@@ -42,7 +44,8 @@ class AddressService extends Service {
       ranking,
       transactionCount,
       blocksMined,
-      delegationState
+      delegationState,
+      delegators
     }
   }
 
@@ -445,6 +448,30 @@ class AddressService extends Service {
       staker: new Address({type: Address.PAY_TO_PUBLIC_KEY_HASH, data: state.topic2.slice(12), chain: this.app.chain}),
       fee: state.data[31]
     }
+  }
+
+  async getAddressDelegators(rawAddress) {
+    const {Address} = this.app.qtuminfo.lib
+    const db = this.ctx.model
+    const {sql} = this.ctx.helper
+    if (rawAddress.type !== Address.PAY_TO_PUBLIC_KEY_HASH) {
+      return null
+    }
+    const list = await db.query(sql`
+      SELECT log.topic3 AS delegator, log.data AS data FROM (
+        SELECT topic3, MAX(_id) AS _id FROM evm_receipt_log
+        WHERE address = ${Buffer.from('0000000000000000000000000000000000000086', 'hex')}
+          AND topic2 = ${Buffer.concat([Buffer.alloc(12), rawAddress])}
+        GROUP BY topic3
+      ) list
+      INNER JOIN evm_receipt_log log ON log._id = list._id
+      WHERE log.topic1 = ${Buffer.from('a23803f3b2b56e71f2921c22b23c32ef596a439dbe03f7250e6b58a30eb910b5', 'hex')}
+      ORDER BY log.topic3 ASC
+    `, {type: db.QueryTypes.SELECT})
+    return list.map(({topic3, data}) => ({
+      delegator: new Address({type: Address.PAY_TO_PUBLIC_KEY_HASH, data: topic3.slice(12), chain: this.app.chain}),
+      fee: data[31]
+    }))
   }
 }
 
