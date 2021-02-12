@@ -296,6 +296,27 @@ class BalanceService extends Service {
     }
   }
 
+  async getRichListSnapshot(blockHeight) {
+    const db = this.ctx.model
+    const {Address} = db
+    const {sql} = this.ctx.helper
+    return await db.query(sql`
+      SELECT address.string AS address, list.balance AS balance
+      FROM (
+        SELECT address_id, SUM(value) AS balance
+        FROM transaction_output
+        WHERE
+          address_id > 0
+          AND (input_height IS NULL OR input_height > ${blockHeight})
+          AND (block_height BETWEEN 1 AND ${blockHeight})
+          AND value > 0
+        GROUP BY address_id
+      ) list
+      INNER JOIN address ON address._id = list.address_id
+      WHERE address.type < ${Address.parseType('contract')}
+    `, {type: db.QueryTypes.SELECT})
+  }
+
   async getBalanceRanking(addressIds) {
     if (addressIds.length !== 1) {
       return null

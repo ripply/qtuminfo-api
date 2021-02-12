@@ -17,6 +17,11 @@ class MiscController extends Controller {
     }
   }
 
+  async richListSnapshot() {
+    const {height} = this.ctx.params
+    this.ctx.body = await this.ctx.service.balance.getRichListSnapshot(height)
+  }
+
   async biggestMiners() {
     let lastNDays = null
     if (this.ctx.query.days && /^[1-9]\d*$/.test(this.ctx.query.days)) {

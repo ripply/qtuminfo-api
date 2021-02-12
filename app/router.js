@@ -223,6 +223,11 @@ module.exports = app => {
     controller.misc.richList
   )
   router.get(
+    '/misc/rich-list/snapshot/:height',
+    paginationMiddleware,
+    controller.misc.richListSnapshot
+  )
+  router.get(
     '/misc/biggest-miners',
     paginationMiddleware,
     controller.misc.biggestMiners
