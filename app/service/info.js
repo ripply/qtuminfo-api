@@ -33,7 +33,8 @@ class InfoService extends Service {
       let supply = 1e8 - 4
       const reward = 4
       const interval = 985500
-      let stakeHeight = height - this.app.chain.lastPoWBlockHeight + 1
+      const normalizedHeight = height >= 845000 ? (height - 845000) / 4 + 845000 : height
+      let stakeHeight = normalizedHeight - this.app.chain.lastPoWBlockHeight + 1
       let halvings = 0
       while (halvings < 7 && stakeHeight > interval) {
         supply += interval * reward / (1 << halvings++)
@@ -75,7 +76,7 @@ class InfoService extends Service {
     const {gte: $gte} = this.app.Sequelize.Op
     const height = await Header.aggregate('height', 'max')
     const list = await Header.findAll({
-      where: {height: {[$gte]: height - 500}},
+      where: {height: {[$gte]: height - 2000}},
       attributes: ['timestamp', 'bits'],
       order: [['height', 'ASC']]
     })

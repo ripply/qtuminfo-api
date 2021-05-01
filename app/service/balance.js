@@ -68,7 +68,7 @@ class BalanceService extends Service {
     const result = await TransactionOutput.aggregate('value', 'SUM', {
       where: {
         addressId: {[$in]: ids},
-        blockHeight: {[$gt]: this.app.blockchainInfo.tip.height - 500},
+        blockHeight: {[$gt]: this.app.blockchainInfo.tip.height - 2000},
         inputHeight: null,
         isStake: true
       }
@@ -82,7 +82,7 @@ class BalanceService extends Service {
     const result = await TransactionOutput.aggregate('value', 'SUM', {
       where: {
         addressId: {[$in]: ids},
-        blockHeight: {[$between]: [1, this.app.blockchainInfo.tip.height - 500]},
+        blockHeight: {[$between]: [1, this.app.blockchainInfo.tip.height - 2000]},
         inputHeight: null
       }
     })
