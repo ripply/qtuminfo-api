@@ -4,6 +4,7 @@ const addressTypes = {
   scripthash: 2,
   witness_v0_keyhash: 3,
   witness_v0_scripthash: 4,
+  witness_v1_taproot: 5,
   contract: 0x80,
   evm_contract: 0x81,
   x86_contract: 0x82
@@ -14,6 +15,7 @@ const addressTypeMap = {
   2: 'scripthash',
   3: 'witness_v0_keyhash',
   4: 'witness_v0_scripthash',
+  5: 'witness_v0_taproot',
   0x80: 'contract',
   0x81: 'evm_contract',
   0x82: 'x86_contract'
